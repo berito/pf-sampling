@@ -1,0 +1,21 @@
+title: Does the resampling scheme matter?
+question: >
+  With everything else fixed, do multinomial, residual, stratified and systematic resampling give
+  different localization accuracy and particle diversity?
+hypothesis: >
+  The lower-variance schemes (residual, stratified, systematic) keep more distinct particles and give
+  slightly lower error than multinomial, with the biggest difference at small particle counts.
+filter: mcl
+world: {}                  # Elfring's running-example world
+fixed:
+  n_particles: 200
+  proposal: motion_model
+  trigger: every_step
+vary:
+  resampler: [multinomial, residual, stratified, systematic]
+seeds: 20
+quick:
+  seeds: 3
+report:
+  metrics: [position_rmse, ate, unique_after_resampling, ess_mean, nees_mean, runtime_per_step_ms]
+  traces: [position_error, ess, unique_after]

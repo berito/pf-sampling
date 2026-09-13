@@ -1,0 +1,3 @@
+seed=0
+Running example particle filter demo.
+Initialize world with landmarks [[2.0, 2.0], [2.0, 8.0], [9.0, 2.0], [8, 9]]

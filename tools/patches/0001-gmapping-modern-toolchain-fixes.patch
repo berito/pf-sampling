@@ -1,0 +1,43 @@
+diff --git a/Makefile b/Makefile
+index 5d13814..ffb2fde 100644
+--- a/Makefile
++++ b/Makefile
+@@ -6,7 +6,7 @@ else
+ ifeq ($(MACOSX),1)
+ SUBDIRS=utils sensor log configfile scanmatcher gridfastslam 
+ else
+-SUBDIRS=utils sensor log configfile scanmatcher gridfastslam gui 
++SUBDIRS=utils sensor log configfile scanmatcher gridfastslam
+ endif
+ endif
+ 
+diff --git a/gridfastslam/gfs2rec.cpp b/gridfastslam/gfs2rec.cpp
+index 35a396d..2d373ef 100644
+--- a/gridfastslam/gfs2rec.cpp
++++ b/gridfastslam/gfs2rec.cpp
+@@ -145,9 +145,9 @@ struct ResampleRecord: public Record{
+ 	virtual void read(istream& is){
+ 		is >> dim;
+ 		for (unsigned int i=0; i< dim; i++){
+-			unsigned int i;
+-			is >> i;
+-			indexes.push_back(i);
++			unsigned int index;
++			is >> index;
++			indexes.push_back(index);
+ 		}
+ 	}
+ };
+diff --git a/gui/gsp_thread.cpp b/gui/gsp_thread.cpp
+index 5d0022f..7ed35ae 100644
+--- a/gui/gsp_thread.cpp
++++ b/gui/gsp_thread.cpp
+@@ -326,7 +326,7 @@ void * GridSlamProcessorThread::fastslamthread(GridSlamProcessorThread* gpt){
+ 	
+ 	if( gpt->infoStream()){
+ 		gpt->infoStream() << " initialPose=" << initialPose.x << " " << initialPose.y << " " << initialPose.theta
+-				<< cout << " xmin=" << xmin <<" ymin=" << ymin <<" xmax=" << xmax <<" ymax=" << ymax << endl;
++				<< " xmin=" << xmin <<" ymin=" << ymin <<" xmax=" << xmax <<" ymax=" << ymax << endl;
+ 	}
+ 	gpt->setMotionModelParameters(gpt->srr, gpt->srt, gpt->str, gpt->stt);
+ 	gpt->setUpdateDistances(gpt->linearUpdate, gpt->angularUpdate, gpt->resampleThreshold);

@@ -1,0 +1,26 @@
+# Input datasets. Nothing here is shipped with the project:
+# tools/fetch_datasets.py downloads each file into datasets/<path>, checks its sha256,
+# and unpacks .gz files next to the download (gmapping reads the plain .log).
+#
+#   path     where the downloaded file goes, under datasets/
+#   url      original source
+#   sha256   checksum of the downloaded file
+#   unpacked sha256 of the unpacked file (only for .gz)
+#
+# Source: Cyrill Stachniss's robotics datasets page, linked from
+# https://www.ipb.uni-bonn.de/datasets/ — verified byte-identical on 2026-09-13.
+
+datasets:
+  - name: intel
+    description: Intel Research Lab — CARMEN laser + odometry log (raw log provided by Dirk Hähnel)
+    path: carmen/intel.log.gz
+    url: http://www2.informatik.uni-freiburg.de/~stachnis/datasets/datasets/intel-lab/intel.log.gz
+    sha256: 449a9813e9709b6fd053ba0d006ea69c5f4485ba08dd021448e653e3af2e6ff9
+    unpacked: 8db0ad6231b48bad4118e6a2dc78e83213b2c306be3b4ed80a90969891abfe7b
+
+  - name: aces
+    description: ACES3 building, Austin — CARMEN laser + odometry log (raw log provided by Patrick Beeson)
+    path: carmen/aces_publicb.log.gz
+    url: http://www2.informatik.uni-freiburg.de/~stachnis/datasets/datasets/aces/aces_publicb.log.gz
+    sha256: a25748b429cad6ffdcd140a6ba75ee43f9c54d9047e09feb3ea2b96dc77aa259
+    unpacked: 1b6a069ebbfe261f2bae8bfe1ee91426932d2b964e8c2c0927b15663a4297390

@@ -1,0 +1,24 @@
+{
+  "name": "pf-sampling",
+  "build": {
+    "dockerfile": "Dockerfile",
+    "context": "."
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-python.python",
+        "ms-toolsai.jupyter",
+        "ms-vscode.cpptools"
+      ],
+      "settings": {
+        "python.defaultInterpreterPath": "/usr/local/bin/python"
+      }
+    }
+  },
+  "postCreateCommand": "bash .devcontainer/postcreate.sh",
+  "remoteUser": "vscode",
+  "containerEnv": {
+    "PFEXP_HOST": "${localEnv:HOSTNAME}${localEnv:COMPUTERNAME}"
+  }
+}
