@@ -7,7 +7,7 @@ reference that our wrapped versions of the same filters are checked against late
     python tools/run_vendor_baseline.py                 all baselines, seed 0
     python tools/run_vendor_baseline.py --only fastslam1 --seed 3
 
-Output: results/baseline/<name>/  trajectory.csv · stdout.log · figure_*.png
+Output: results/baseline/<name>/  trajectory.csv, stdout.log, figure_*.png
 """
 import argparse
 import contextlib
@@ -146,7 +146,7 @@ def main():
         finally:
             os.chdir(cwd)
         (out / "stdout.log").write_text(f"seed={args.seed}\n" + log.getvalue())
-        print(f"{name:32s} → {out.relative_to(PROJECT)}")
+        print(f"{name:32s} {out.relative_to(PROJECT)}")
 
 
 if __name__ == "__main__":

@@ -20,7 +20,8 @@ import pandas as pd
 
 from pfexp import vendor
 
-RESULTS = vendor.PROJECT / "results"
+# PFEXP_RESULTS points everything at another folder, e.g. a temporary one for a test run.
+RESULTS = Path(os.environ["PFEXP_RESULTS"]).resolve() if os.environ.get("PFEXP_RESULTS") else vendor.PROJECT / "results"
 QUICK_RESULTS = RESULTS / "quick"
 PACKAGE = Path(__file__).resolve().parent
 
@@ -93,6 +94,13 @@ def _json_default(value):
     if isinstance(value, np.generic):
         return value.item()
     raise TypeError(f"not JSON serializable: {type(value)}")
+
+
+def count_older_runs(folder, run_ids):
+    """How many of these stored runs were made with a different version of the result-producing code."""
+    current = code_fingerprint()
+    paths = [run_path(folder, run_id) for run_id in run_ids]
+    return sum(json.loads(path.read_text())["code"] != current for path in paths if path.exists())
 
 
 def load_runs(folder):

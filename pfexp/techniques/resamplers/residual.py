@@ -1,4 +1,4 @@
-"""Residual resampling — Elfring's implementation, imported unchanged.
+"""Residual resampling: Elfring's implementation, imported unchanged.
 
 Keeps floor(N*w) copies of each particle deterministically, draws the rest multinomially.
 """

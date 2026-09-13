@@ -2,7 +2,7 @@
 
 Particles are always handled as a numpy array of normalized weights (shape N) plus filter-specific
 states, so the same resampler or trigger works for every filter. Randomness comes from the global
-numpy generator, which the runner seeds per run — the upstream code works the same way.
+numpy generator, which the runner seeds per run, as the upstream code works the same way.
 """
 import numpy as np
 

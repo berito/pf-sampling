@@ -1,0 +1,39 @@
+% Shared commands for the report.
+
+% Placeholder text, shown in red so nothing unfinished slips through.
+\newcommand{\todo}[1]{\textcolor{red}{[TODO: #1]}}
+
+% Notation
+\newcommand{\x}{\bm{x}}
+\newcommand{\z}{\bm{z}}
+\newcommand{\uu}{\bm{u}}
+\newcommand{\m}{\bm{m}}
+\newcommand{\w}{w}
+
+% Experiment results are read straight from results/, never copied, so rerunning an experiment updates the
+% report. Until an experiment has run, a red placeholder is shown instead.
+\providecommand{\resultsdir}{../results}  % a build can point elsewhere first, e.g. at ../results/quick
+
+% \experimenttable{E01_resampling_scheme_localization}{Caption}
+\newcommand{\experimenttable}[2]{%
+  \IfFileExists{\resultsdir/#1/tables/summary.tex}{%
+    \begin{table}[htbp]
+      \centering\small
+      \caption{#2 Mean $\pm$ standard deviation over seeds.}\label{tab:#1}
+      \resizebox{\linewidth}{!}{\input{\resultsdir/#1/tables/summary.tex}}
+    \end{table}%
+  }{\par\todo{Table for \detokenize{#1}: run the experiment first.}\par
+    \typeout{MISSING RESULTS: \detokenize{#1} table}}%
+}
+
+% \experimentfigure{E01_resampling_scheme_localization}{metrics}{Caption}   (figure name without extension)
+\newcommand{\experimentfigure}[3]{%
+  \IfFileExists{\resultsdir/#1/figures/#2.pdf}{%
+    \begin{figure}[htbp]
+      \centering
+      \includegraphics[width=\linewidth]{\resultsdir/#1/figures/#2.pdf}
+      \caption{#3}\label{fig:#1-#2}
+    \end{figure}%
+  }{\par\todo{Figure \detokenize{#2} for \detokenize{#1}: run the experiment first.}\par
+    \typeout{MISSING RESULTS: \detokenize{#1} figure #2}}%
+}

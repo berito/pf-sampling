@@ -1,4 +1,4 @@
-"""Multinomial resampling — Elfring's implementation, imported unchanged.
+"""Multinomial resampling: Elfring's implementation, imported unchanged.
 
 Draws every particle independently in proportion to its weight (highest variance).
 """

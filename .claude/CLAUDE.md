@@ -9,6 +9,17 @@ Particle-filter experiments for a PGM course project. See README.md for what the
 - Show a plan before starting larger changes, and wait for approval.
 
 ## Rules
+- **Stages:** development (now): `.claude/` and `docs/` are tracked but separate from the product. Release (after the
+  experiments and report): they are untracked/removed and the product must work without them.
+- **How we work and what we produce stay separate.** `.claude/tools/README.md` lists every tool and working file
+  Claude uses, and where it lives. Add anything new you create for planning, tracking or checking to that list.
+- **No conversation or history in files.** Code, comments and docs state what things are and do, the way a person
+  writes them. Reasons for past choices and what changed ("now", "no longer", "moved", "earlier runs showed") go in
+  the commit message the user writes, not in files. Anything unused is deleted, not kept with an explanation.
+- **Keep agent and project-management tooling out of the shared project.** Scripts, tests and notes that exist for
+  Claude or for the milestone plan (e.g. the milestone checker) live in `.claude/tools/`; shared code, configs,
+  guides and the Makefile never mention milestones, checkpoints, `docs/`, `.claude/` or that tooling. Shared code
+  must read as a person would write it and be runnable with ordinary commands (`make`, `python -m ...`, pytest).
 - **Never edit `vendor/`.** Upstream code is fetched by `tools/fetch_vendors.py` at the commits in
   `vendors.yaml`. Import it unchanged via `pfexp/vendor.py`, or copy a function into `pfexp/` with a
   header: `Borrowed from <repo>/<file>@<commit>; licence; changes: ...`, and list it in THIRD_PARTY.md.
@@ -26,7 +37,7 @@ Particle-filter experiments for a PGM course project. See README.md for what the
   skip runs that already exist.
 - **Sampling techniques are plug-ins:** adding one should be one new file, no edits elsewhere.
 - `.gitignore`: `vendor/` is ignored (recreated by `tools/fetch_vendors.py`); `datasets/`, `docs/` are listed but commented out until the code is shared.
-  Don't uncomment them unless asked.
+  Don't uncomment them unless asked. Sharing steps: `.claude/tools/README.md`.
 - README.md is for people: keep it short and plain.
 
 ## Useful commands
@@ -38,7 +49,14 @@ python -m pytest                          # all tests (includes a check that cod
 python tools/run_vendor_baseline.py       # rerun the upstream demos → results/baseline/
 python -m pfexp.run experiments/<E>.yaml  # run an experiment (resumable) → results/<E>/
 python show_results.py [--quick]          # what the lecturer runs; must stay standard-library only
+make -C report                            # build the LaTeX report → report/report.pdf (build files in .build/report)
 ```
+`make` lists short forms of all of these (`make status` = which experiment runs are done); they work on the host and
+inside the container. Human guides: experiments/README.md, report/README.md, pfexp/README.md.
 
-Borrowed upstream code keeps its bug fixes switchable (`upstream_bugs`, `wrap_angle_residual`); tests compare
-the copies against the vendor functions with the fixes off. Adding a technique: see pfexp/README.md.
+Private, for Claude only (run inside the container; not part of the shared project):
+```bash
+python .claude/tools/check_milestones.py [M4] [--fast]   # each milestone in TASKS.md: done / missing / next command
+python -m pytest -q .claude/tools                         # its tests, incl. "shared files don't mention private material"
+```
+Keep the checker in step with TASKS.md and the experiment configs.

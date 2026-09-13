@@ -1,4 +1,4 @@
-"""Resample at every step (the SIR filter) — Elfring's ParticleFilterSIR rule, imported unchanged."""
+"""Resample at every step (the SIR filter): Elfring's ParticleFilterSIR rule, imported unchanged."""
 from pfexp.registry import register
 from pfexp.techniques.triggers._elfring import call_vendor_rule
 from pfexp.techniques.base import Trigger

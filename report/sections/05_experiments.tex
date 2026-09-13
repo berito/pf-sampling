@@ -1,0 +1,40 @@
+\section{Experiments and Results}\label{sec:experiments}
+
+% One subsection per experiment: question, setup, table, figure, what it shows.
+% Tables and figures are read from results/<experiment>/ by \experimenttable and \experimentfigure;
+% the first argument is the config name in experiments/ (without .yaml). See report/README.md.
+
+\subsection{Resampling scheme}\label{sec:e01}
+\todo{E01: question, setup and findings.}
+\experimenttable{E01_resampling_scheme_localization}{Resampling schemes, localization.}
+\experimentfigure{E01_resampling_scheme_localization}{metrics}{Resampling schemes in localization: metrics against the number of particles.}
+\experimenttable{E01_resampling_scheme_slam}{Resampling schemes, FastSLAM 1.0.}
+\experimentfigure{E01_resampling_scheme_slam}{metrics}{Resampling schemes in FastSLAM 1.0: metrics against the number of particles.}
+
+\subsection{When to resample}\label{sec:e02}
+\todo{E02: question, setup and findings.}
+\experimenttable{E02_when_to_resample}{When to resample.}
+\experimentfigure{E02_when_to_resample}{metrics}{When to resample: metrics per rule.}
+\experimentfigure{E02_when_to_resample}{trace_ess}{When to resample: effective sample size over time.}
+
+\subsection{Proposal distribution}\label{sec:e03}
+\todo{E03: question, setup and findings.}
+\experimenttable{E03_proposal_localization}{Proposal distributions, localization.}
+\experimentfigure{E03_proposal_localization}{metrics}{Proposal distributions in localization: metrics against the number of particles.}
+\experimenttable{E03_proposal_slam}{FastSLAM 1.0 and 2.0.}
+\experimentfigure{E03_proposal_slam}{metrics}{FastSLAM 1.0 and 2.0: metrics against the number of particles.}
+
+\subsection{Number of particles}\label{sec:e04}
+\todo{E04: question, setup and findings.}
+\experimenttable{E04_particle_count}{Number of particles.}
+\experimentfigure{E04_particle_count}{metrics}{Accuracy and runtime against the number of particles.}
+
+\subsection{Resample-move}\label{sec:e05}
+\todo{E05: question, setup and findings.}
+\experimenttable{E05_resample_move}{Resample-move.}
+\experimentfigure{E05_resample_move}{metrics}{Resample-move compared with plain resampling.}
+
+\subsection{Real data: gmapping}\label{sec:e06}
+\todo{E06 (optional): question, setup and findings. Remove this subsection if E06 is not run.}
+\experimenttable{E06_gmapping_resampling}{gmapping on the Intel Research Lab log.}
+\experimentfigure{E06_gmapping_resampling}{metrics}{gmapping: sampling metrics against the resampling threshold.}

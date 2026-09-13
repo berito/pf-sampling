@@ -1,7 +1,7 @@
 """FastSLAM (Rao-Blackwellized particle filter SLAM) with swappable sampling steps.
 
 Each particle samples a robot trajectory and keeps its own map: one small EKF per landmark. That split is
-the Rao-Blackwellization — given the trajectory, the landmarks are independent. The proposal decides how
+the Rao-Blackwellization: given the trajectory, the landmarks are independent. The proposal decides how
 poses are sampled (FastSLAM 1.0 or 2.0); resampling and moves come from the registry as for localization.
 Defaults follow the PythonRobotics scripts (100 particles, resample when ESS < N/1.5, low-variance resampling).
 """

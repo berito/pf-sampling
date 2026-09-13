@@ -39,7 +39,7 @@ def status(repo, commit):
     changes = git(repo, "status", "--porcelain", "--ignored")
     if changes:
         n = len(changes.splitlines())
-        return False, f"at {commit[:7]} but has {n} local change(s) — see `git -C {repo} status --ignored`"
+        return False, f"at {commit[:7]} but has {n} local change(s), see `git -C {repo} status --ignored`"
     return True, f"ok at {commit[:7]}"
 
 
@@ -74,7 +74,7 @@ def main():
         if repo.exists():
             ok, message = status(repo, v["commit"])
         elif args.check:
-            ok, message = False, "missing — run without --check to fetch"
+            ok, message = False, "missing, run without --check to fetch"
         else:
             print(f"{v['name']:26s} fetching {v['url']} @ {v['commit'][:7]} ...", flush=True)
             fetch(repo, v["url"], v["commit"], v.get("sparse"))

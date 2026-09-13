@@ -1,0 +1,24 @@
+# E03 (localization part). Run: make run E=E03   or   python -m pfexp.run experiments/E03_proposal_localization.yaml
+title: Which proposal distribution? (localization)
+question: >
+  Does sampling from a proposal that uses the measurement (auxiliary particle filter, extended Kalman
+  particle filter) beat sampling from the motion model, and at which particle counts?
+hypothesis: >
+  Measurement-aware proposals put particles where the likelihood is high, so they reach a given
+  error with fewer particles, at a higher cost per particle. The extended Kalman proposal needs
+  enough particles to cover the uniform start.
+filter: mcl
+world: {}
+fixed:
+  resampler: systematic
+  trigger: {name: ess_threshold, threshold: 0.5}
+vary:
+  proposal: [motion_model, auxiliary, extended_kalman]
+  n_particles: [50, 100, 300, 1000]
+seeds: 20
+quick:
+  seeds: 3
+  vary: {n_particles: [100, 300]}
+report:
+  metrics: [position_rmse, ate, ess_mean, nees_mean, runtime_per_step_ms]
+  traces: []

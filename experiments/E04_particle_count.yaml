@@ -1,0 +1,23 @@
+# E04. Run: make run E=E04   or   python -m pfexp.run experiments/E04_particle_count.yaml
+title: How many particles are enough?
+question: >
+  How do localization error, particle diversity and runtime change with the number of particles, and
+  where do more particles stop helping?
+hypothesis: >
+  Error falls quickly and then levels off, while runtime grows linearly with N, so there is a clear
+  point of diminishing returns.
+filter: mcl
+world: {}
+fixed:
+  proposal: motion_model
+  resampler: systematic
+  trigger: {name: ess_threshold, threshold: 0.5}
+vary:
+  n_particles: [10, 25, 50, 100, 250, 500, 1000, 2500]
+seeds: 20
+quick:
+  seeds: 3
+  vary: {n_particles: [25, 100, 500]}
+report:
+  metrics: [position_rmse, ate, ess_mean, nees_mean, runtime_per_step_ms, runtime_total_s]
+  traces: [position_error]

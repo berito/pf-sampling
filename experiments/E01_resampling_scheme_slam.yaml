@@ -1,0 +1,23 @@
+# E01 (SLAM part). Run: make run E=E01   or   python -m pfexp.run experiments/E01_resampling_scheme_slam.yaml
+title: Does the resampling scheme matter? (FastSLAM 1.0)
+question: >
+  In FastSLAM 1.0, where each particle carries its own map, do the four resampling schemes give
+  different pose and map accuracy or particle diversity?
+hypothesis: >
+  As in localization, the lower-variance schemes keep more distinct particles; because a lost map
+  cannot be recovered, the effect on map error is larger at small particle counts.
+filter: fastslam
+world: {}                  # the PythonRobotics FastSLAM scenario
+fixed:
+  proposal: fastslam1
+  trigger: every_step
+vary:
+  resampler: [multinomial, residual, stratified, systematic]
+  n_particles: [10, 50]
+seeds: 20
+quick:
+  seeds: 2
+  world: {sim_time: 15.0}
+report:
+  metrics: [position_rmse, ate, map_error_aligned, unique_after_resampling, ess_mean, runtime_per_step_ms]
+  traces: []

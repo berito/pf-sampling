@@ -5,19 +5,20 @@ Borrowed from particle_filter_tutorial/core/particle_filters/extended_kalman_par
 
 Each particle carries an EKF covariance. The EKF prediction and a sequential update over the landmark
 measurements give a Gaussian per particle; the new pose is sampled from it and weighted by
-likelihood × prior / proposal.
+likelihood * prior / proposal.
 
-Changes: vectorized over particles; log weights; previous weights carried over (upstream resamples every
-step, so they were always uniform there); resampling is left to the experiment's trigger and resampler.
+Differences from upstream: vectorized over particles; log weights; previous weights are carried over (upstream
+resamples every step, so its weights are always uniform); resampling is left to the experiment's trigger and
+resampler.
 
-FIXES (all on by default; `upstream_bugs=True` reproduces the upstream behaviour):
-1. Covariance prediction used element-wise products (`F * P * F.T`); now the matrix product F P Fᵀ.
-2. Q and R were built from standard deviations; now from variances.
+Corrections (all on by default; `upstream_bugs=True` reproduces the upstream behaviour):
+1. Covariance prediction uses the matrix product F P F^T (upstream: element-wise `F * P * F.T`).
+2. Q and R are built from variances (upstream: standard deviations).
 3. Angle innovation and angle differences in the prior are wrapped to [-pi, pi).
-4. The prior was centred on the EKF-updated state (upstream aliases the predicted state list and
-   updates it in place); now it is centred on the prediction.
-5. The measurement Jacobian of the angle used dy/dx forms that divide by zero at dx = 0; now the
-   equivalent -dy/r², dx/r².
+4. The prior is centred on the prediction (upstream aliases the predicted state list and updates it in
+   place, so its prior is centred on the EKF-updated state).
+5. The measurement Jacobian of the angle uses -dy/r^2, dx/r^2 (upstream: dy/dx forms that divide by zero
+   at dx = 0).
 """
 import numpy as np
 

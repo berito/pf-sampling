@@ -1,4 +1,4 @@
-"""Systematic resampling — Elfring's implementation, imported unchanged.
+"""Systematic resampling: Elfring's implementation, imported unchanged.
 
 A single uniform draw, then N evenly spaced points along the cumulative weights (lowest variance).
 """

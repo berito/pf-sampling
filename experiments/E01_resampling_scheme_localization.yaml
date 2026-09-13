@@ -1,4 +1,5 @@
-title: Does the resampling scheme matter?
+# E01 (localization part). Run: make run E=E01   or   python -m pfexp.run experiments/E01_resampling_scheme_localization.yaml
+title: Does the resampling scheme matter? (localization)
 question: >
   With everything else fixed, do multinomial, residual, stratified and systematic resampling give
   different localization accuracy and particle diversity?
@@ -8,14 +9,15 @@ hypothesis: >
 filter: mcl
 world: {}                  # Elfring's running-example world
 fixed:
-  n_particles: 200
   proposal: motion_model
-  trigger: every_step
+  trigger: every_step      # resample every step, so only the scheme differs
 vary:
   resampler: [multinomial, residual, stratified, systematic]
+  n_particles: [50, 200, 1000]          # last numeric setting = x axis of the figures
 seeds: 20
 quick:
   seeds: 3
+  vary: {n_particles: [50, 200]}
 report:
   metrics: [position_rmse, ate, unique_after_resampling, ess_mean, nees_mean, runtime_per_step_ms]
-  traces: [position_error, ess, unique_after]
+  traces: []               # 12 variants: the per-step plots would be unreadable

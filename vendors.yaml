@@ -5,7 +5,7 @@
 #   url      upstream git repository
 #   commit   full commit hash to check out (the experiments were run against this)
 #   sparse   optional: only check out these paths (folders or files)
-#   licence  upstream licence — see THIRD_PARTY.md for what that means for us
+#   licence  upstream licence; see THIRD_PARTY.md for what that means for us
 
 vendors:
   - name: particle_filter_tutorial
@@ -24,7 +24,3 @@ vendors:
     commit: 79ef0b0e6d9a12d6390ae64c4c00d37d776abefb
     licence: CC BY-NC-SA 2.0
 
-  - name: grid_rbpf_python
-    url: https://github.com/toolbuddy/2D-Grid-SLAM
-    commit: 9364e8c18b94d1765a78654ca608193352f22754
-    licence: GPL-3.0

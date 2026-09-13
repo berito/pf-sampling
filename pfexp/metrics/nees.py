@@ -1,6 +1,6 @@
 """Normalized estimation error squared of the pose: does the particle spread match the actual error?
 
-NEES = eᵀ Σ⁻¹ e with e the pose error and Σ the weighted particle covariance. For a consistent filter its
+NEES = e^T inv(S) e with e the pose error and S the weighted particle covariance. For a consistent filter its
 average is about 3 (the pose dimension); much larger means the particles are overconfident.
 """
 import numpy as np

@@ -1,6 +1,6 @@
 """Motion-model (bootstrap) proposal for localization: sample from p(x_t | x_t-1, u), weight by p(z | x_t).
 
-The standard particle filter — what Elfring's ParticleFilterSIR does.
+The standard particle filter, as Elfring's ParticleFilterSIR does.
 """
 import numpy as np
 

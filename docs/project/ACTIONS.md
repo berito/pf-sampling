@@ -94,3 +94,41 @@ Every major step taken on the project, one line each, oldest first. Details are 
 - Changed the gmapping build so its programs find their libraries relative to themselves, not by a fixed path.
 - Tested a copy of the project in a different folder at a different container path, without rebuilding: everything worked.
 - Stopped git from adding the upstream repos to the new repo (`vendor/` ignored; `fetch_vendors.py` recreates it).
+- Noticed the public repo included the private `docs/` folder; the repo was made private, and cleaning `docs/` out of the history is noted before it goes public.
+
+### Report
+- Added milestone M7 for the LaTeX report, to be written at the end.
+- Created the report structure: main file, one file per section, references, and a `make` build.
+- Added LaTeX to the container image, placed so adding Python libraries stays fast.
+- Made the report read experiment tables and figures directly from `results/`, with a red placeholder until they exist.
+- Built the empty report, and a test version with the quick E01 results to confirm the table and figure appear.
+- Switched figures to a white background so they print cleanly in the report.
+
+### Teach and share
+- Added milestone M8: a personal blog article explaining particle filters and sampling techniques, to follow the report.
+
+### Running the rest without Claude
+- Added a milestone checker: for each milestone it shows what is done, what is missing, and the next command.
+- Added a Makefile with short commands that work on the host and inside the container.
+- Wrote the experiment configs E01–E06; E01 and E03 now have a localization part and a SLAM part.
+- Made the runner skip experiments that cannot run yet (like E05 before its plug-in exists), with the reason.
+- Added gmapping as a filter so the real-data sweep (E06) runs, resumes and reports like the other experiments.
+- Fixed the sweep figures (particle counts were plotted as text) and a crash with more than eight variants.
+- Made the report always rebuild, list missing results, and preview with the quick results.
+- Stopped the automatic findings from judging noise when there is only one seed.
+- Wrote the guides experiments/README.md and report/README.md; pointed README.md at them.
+- Added tests for the configs, the skipping, the sweeps, the gmapping output and the checker (110 tests pass).
+
+### Keeping agent tooling out of the shared code
+- Moved the milestone checker and its tests to a private folder, `docs/project/agent/`, since only Claude uses them.
+- Moved `CLAUDE.md` to `.claude/`, to be left out when the code is shared.
+- Removed milestone wording from the experiment configs, guides, Makefile and tests.
+- Replaced `make check` with `make status`, which shows the runs done and to do for each experiment.
+- Made the private checker also confirm that no shared file mentions private material.
+- Checked every product file for traces of how we work; removed a reference to a private note and a mention of Claude.
+- Wrote a private list of every working file and tool, with where it lives and how to share the product without them.
+- Moved all of Claude's tools into `.claude/tools/`, so one folder can be untracked; `docs/` keeps only your notes.
+- Deleted the early grid-SLAM exploration script, its upstream repo and OpenCV, since nothing uses them.
+- Replaced typographic characters (long dashes, arrows, maths symbols) with plain text in the project files.
+- Removed wording that tells the history of the work from project files; that belongs in commit messages.
+- Tested a clean copy without the private folders in a new container: setup, tests, quick run and report all worked. M3 done.

@@ -6,7 +6,7 @@
     results/<experiment>/summary.md               question, setup, table, findings, figures
     results/<experiment>/summary.json             the same, read by show_results.py
 
-Rebuild without running anything:  python -m pfexp.analysis experiments/E01_resampling_scheme.yaml [--quick]
+Rebuild without running anything:  python -m pfexp.analysis experiments/E01_resampling_scheme_localization.yaml [--quick]
 """
 import argparse
 import json
@@ -118,7 +118,10 @@ def findings(stats, metrics):
             continue
         separated = abs(mean[best] - mean[worst]) > half_width[best] + half_width[worst]
         change = abs(mean[best] - mean[worst]) / abs(mean[worst]) * 100 if mean[worst] else float("nan")
-        verdict = "clearly beyond the seed-to-seed spread" if separated else "within the seed-to-seed spread"
+        if min(n[best], n[worst]) < 2:  # one seed has no spread to compare against
+            verdict = "not tested (needs at least 2 seeds)"
+        else:
+            verdict = "clearly beyond the seed-to-seed spread" if separated else "within the seed-to-seed spread"
         sentences.append(
             f"{style.METRICS.get(metric, (metric,))[0]}: {what} is {best} ({mean[best]:.3g}), "
             f"vs {worst} ({mean[worst]:.3g}), a {change:.0f}% difference, {verdict} (95% intervals)."
@@ -153,9 +156,12 @@ def save(fig, figures, name):
 
 
 def sweep_key(experiment):
-    """The varied setting to put on the x axis if the experiment is a numeric sweep, else None."""
+    """The varied setting to put on the x axis if the experiment is a numeric sweep, else None.
+
+    With two varied settings the other one gives one line each; if both are numeric, the last one is the x axis.
+    """
     numeric = [k for k, v in experiment.vary.items() if all(isinstance(x, (int, float)) for x in v)]
-    return numeric[0] if len(numeric) == 1 and len(experiment.vary) <= 2 else None
+    return numeric[-1] if numeric and len(experiment.vary) <= 2 else None
 
 
 def metrics_figure(experiment, df, stats, order, metrics, figures):
@@ -199,6 +205,7 @@ def _metric_per_variant(ax, experiment, df, stats, order, metric):
 
 def _metric_vs_sweep(ax, experiment, df, metric, sweep):
     others = [k for k in experiment.vary if k != sweep]
+    df = df.assign(**{sweep: pd.to_numeric(df[sweep])})  # the runs table stores settings as labels (text)
     groups = [(None, df)] if not others else list(df.groupby(others[0], sort=False))
     names = [g for g, _ in groups]
     colours = style.colours(names) if others else [style.CATEGORICAL[0]]
@@ -208,7 +215,9 @@ def _metric_vs_sweep(ax, experiment, df, metric, sweep):
         x = np.array(sorted(grouped.groups))
         mean = grouped.mean().reindex(x).to_numpy()
         half = (Z95 * grouped.std(ddof=1) / np.sqrt(grouped.size())).reindex(x).fillna(0).to_numpy()
-        label = style.technique_name(name) if name is not None else None
+        label = None if name is None else style.technique_name(name)
+        if label and others and all(isinstance(x, (int, float)) for x in experiment.vary[others[0]]):
+            label = f"{others[0].replace('_', ' ')} = {name}"  # a bare number needs its setting's name
         ax.plot(x, mean, color=colour, marker="o", markersize=4, label=label)
         ax.fill_between(x, mean - half, mean + half, color=colour, alpha=0.15, linewidth=0)
         if label:
@@ -258,7 +267,7 @@ def setup_lines(experiment, n_runs):
         f"Fixed: {fixed}",
         f"Varied: {varied}",
         f"Seeds: {len(experiment.seeds)} (each seed fixes the world and the filter's randomness, "
-        f"the same for every variant) — {n_runs} runs",
+        f"the same for every variant), {n_runs} runs",
     ]
 
 

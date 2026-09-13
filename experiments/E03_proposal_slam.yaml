@@ -1,0 +1,23 @@
+# E03 (SLAM part). Run: make run E=E03   or   python -m pfexp.run experiments/E03_proposal_slam.yaml
+title: Which proposal distribution? (FastSLAM 1.0 vs 2.0)
+question: >
+  Does FastSLAM 2.0, which samples the pose from a proposal that includes the current observation,
+  give better pose and map estimates than FastSLAM 1.0, and does the advantage shrink with more particles?
+hypothesis: >
+  FastSLAM 2.0 is more accurate and keeps a higher ESS, especially with few particles, at a higher
+  runtime per step (Montemerlo et al., 2003).
+filter: fastslam
+world: {}
+fixed:
+  resampler: systematic    # trigger: the PythonRobotics default, ESS below N/1.5
+vary:
+  proposal: [fastslam1, fastslam2]
+  n_particles: [5, 10, 25, 100]
+seeds: 20
+quick:
+  seeds: 2
+  world: {sim_time: 15.0}
+  vary: {n_particles: [5, 25]}
+report:
+  metrics: [position_rmse, ate, map_error_aligned, ess_mean, runtime_per_step_ms]
+  traces: []

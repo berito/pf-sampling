@@ -84,7 +84,7 @@ def main():
             report.append(f"{target.name} {unpacked_message}")
 
         problems += not ok
-        print(f"{d['name']:10s} {'OK ' if ok else '!! '} {' · '.join(report)}")
+        print(f"{d['name']:10s} {'OK ' if ok else '!! '} {' | '.join(report)}")
 
     sys.exit(1 if problems else 0)
 

@@ -1,9 +1,11 @@
-# Tools — our build and run scripts
+# Tools: build, download and run scripts
 
 ```
 tools/
-  build_gmapping.sh        copy vendor gmapping → .build/, patch, build
-  grid_rbpf_headless.py    batch runner for vendor/grid_rbpf_python
+  fetch_vendors.py         download the upstream code at the pinned commits (--check: verify only)
+  fetch_datasets.py        download the datasets and verify checksums (--check: verify only)
+  run_vendor_baseline.py   rerun the upstream demos unchanged, into results/baseline/
+  build_gmapping.sh        copy vendor gmapping to .build/, patch, build
   patches/                 fixes applied to the .build/ copy of gmapping (never to vendor/)
 ```
 
@@ -35,20 +37,15 @@ $BIN/gfs2neff results/aces.gfs results/aces_neff.txt
 ```
 
 The two experiment knobs are on the command line: `-particles` (N) and `-resampleThreshold`
-(the ESS trigger, as a fraction of N; gmapping's default is 0.5).
+(the ESS trigger, as a fraction of N; gmapping's default is 0.5). `-randseed` makes a run repeatable.
+
+The sweep over both is an ordinary experiment, `experiments/E06_gmapping_resampling.yaml` (`make run E=E06`).
+It calls `gfs_nogui` through `pfexp/filters/gmapping.py`, in a temporary folder under `.build/`.
 
 `patches/0001-gmapping-modern-toolchain-fixes.patch` makes 2004-era C++ build with GCC 12 and
 GNU make 4.3:
 
-1. `Makefile` — drop the `gui` subdirectory, which needs Qt3. `gfs_nogui` does not need Qt and is
+1. `Makefile`: drop the `gui` subdirectory, which needs Qt3. `gfs_nogui` does not need Qt and is
    built separately by the script.
-2. `gridfastslam/gfs2rec.cpp` — a loop variable was redeclared inside its own loop body.
-3. `gui/gsp_thread.cpp` — a stray `<< cout` in the middle of a stream chain.
-
-## Grid RBPF (Python)
-
-```bash
-python tools/grid_rbpf_headless.py --steps 120 --particles 20 --out results/grid_rbpf
-```
-
-Writes `slam_map.png`, `ground_truth_map.png` and `ess_trace.csv`.
+2. `gridfastslam/gfs2rec.cpp`: a loop variable was redeclared inside its own loop body.
+3. `gui/gsp_thread.cpp`: a stray `<< cout` in the middle of a stream chain.

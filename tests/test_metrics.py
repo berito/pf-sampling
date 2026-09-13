@@ -54,7 +54,7 @@ def test_ess_degeneracy_runtime():
 
 
 def test_nees_is_about_the_dimension_when_consistent():
-    """Particles drawn around the truth with the spread they claim give NEES ≈ 3 on average."""
+    """Particles drawn around the truth with the spread they claim give NEES of about 3 on average."""
     rng = np.random.RandomState(2)
     log = RunLog(settings={"n_particles": 2000})
     for t in range(300):

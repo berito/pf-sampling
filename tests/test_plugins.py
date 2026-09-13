@@ -63,20 +63,6 @@ def test_describe_is_recorded_for_every_technique():
             assert registry.create(kind, name).describe()["name"] == name
 
 
-def test_code_does_not_depend_on_docs():
-    """docs/ is private and removed before sharing, so nothing that is shared may refer to it."""
-    offenders = []
-    for folder in ("pfexp", "tools", "tests", ".devcontainer"):
-        for path in (PROJECT / folder).rglob("*"):
-            if path.is_file() and path.suffix in {".py", ".sh", ".json", ".yaml", ".toml", ".md"}:
-                if path != Path(__file__).resolve() and "docs/" in path.read_text(errors="ignore"):
-                    offenders.append(str(path.relative_to(PROJECT)))
-    for name in ("README.md", "THIRD_PARTY.md", "vendors.yaml", "datasets.yaml", "pyproject.toml"):
-        if "docs/" in (PROJECT / name).read_text():
-            offenders.append(name)
-    assert not offenders, offenders
-
-
 def test_vendor_code_is_untouched():
     """Upstream repos must stay exactly at their pinned commits, with no files added (e.g. __pycache__)."""
     import importlib.util

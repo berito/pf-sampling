@@ -1,6 +1,6 @@
 """Particle-filter localization (MCL) with swappable sampling steps.
 
-The loop follows Elfring's particle filters (propose → weight → maybe resample), with each step
+The loop follows Elfring's particle filters (propose, weight, maybe resample), with each step
 taken from the registry: a proposal, a trigger that decides whether to resample, a resampler, and an
 optional move applied after resampling. Models come from `mcl_model.py`.
 """

@@ -30,7 +30,7 @@ def path(name):
         raise KeyError(f"'{name}' is not listed in vendors.yaml")
     repo = VENDOR_DIR / name
     if not repo.is_dir():
-        raise NotFetchedError(f"vendor/{name} is missing — run: python tools/fetch_vendors.py --only {name}")
+        raise NotFetchedError(f"vendor/{name} is missing, run: python tools/fetch_vendors.py --only {name}")
     return repo
 
 
@@ -38,7 +38,7 @@ def use(name, subdir=""):
     """Make a vendor repo (or a folder inside it) importable, and return that folder."""
     folder = path(name) / subdir
     if not folder.is_dir():
-        raise NotFetchedError(f"vendor/{name}/{subdir} not found — check the sparse paths in vendors.yaml")
+        raise NotFetchedError(f"vendor/{name}/{subdir} not found, check the sparse paths in vendors.yaml")
     if str(folder) not in sys.path:
         sys.path.insert(0, str(folder))
     return folder
@@ -56,5 +56,5 @@ def dataset(relative):
     """Path of a fetched dataset file, e.g. dataset('carmen/intel.log')."""
     file = DATASETS_DIR / relative
     if not file.exists():
-        raise NotFetchedError(f"datasets/{relative} is missing — run: python tools/fetch_datasets.py")
+        raise NotFetchedError(f"datasets/{relative} is missing, run: python tools/fetch_datasets.py")
     return file

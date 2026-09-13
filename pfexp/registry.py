@@ -12,7 +12,7 @@ Experiment configs then refer to it by name, either as a plain string or with pa
     trigger: {name: ess_threshold, threshold: 0.5}
 
 All modules under pfexp.techniques and pfexp.metrics are imported automatically, so adding a
-technique means adding one file — nothing else needs to change.
+technique means adding one file; nothing else needs to change.
 """
 import importlib
 import pkgutil

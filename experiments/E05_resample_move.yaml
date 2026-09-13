@@ -1,0 +1,26 @@
+# E05. Needs the move technique pfexp/techniques/moves/resample_move_mh.py (see experiments/README.md).
+# Until that file exists, the runner skips this experiment and says why.
+# Run: make run E=E05   or   python -m pfexp.run experiments/E05_resample_move.yaml
+title: Do MCMC moves after resampling help?
+question: >
+  Does adding Metropolis-Hastings moves after resampling (resample-move) restore particle diversity and
+  lower the error compared with plain resampling, and is it worth the extra runtime?
+hypothesis: >
+  Moves keep more distinct particles after resampling and lower the error at small particle counts;
+  with many particles the gain is small and the extra likelihood evaluations dominate the runtime.
+filter: mcl
+world: {}
+fixed:
+  proposal: motion_model
+  resampler: systematic
+  trigger: every_step
+vary:
+  move: [none, resample_move_mh]      # parameters, if any: {name: resample_move_mh, steps: 1}
+  n_particles: [25, 100, 500]
+seeds: 20
+quick:
+  seeds: 3
+  vary: {n_particles: [25, 100]}
+report:
+  metrics: [position_rmse, unique_after_resampling, ess_mean, nees_mean, runtime_per_step_ms]
+  traces: []

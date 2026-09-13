@@ -1,7 +1,7 @@
 """Compare stored results across experiments, without running anything.
 
-    python -m pfexp.compare results/E01_resampling_scheme results/E05_resample_move --metrics position_rmse ess_mean
-    python -m pfexp.compare results/E01_resampling_scheme results/E05_resample_move --name resample_move_vs_baseline
+    python -m pfexp.compare results/E01_resampling_scheme_localization results/E05_resample_move --metrics position_rmse ess_mean
+    python -m pfexp.compare results/E01_resampling_scheme_localization results/E05_resample_move --name resample_move_vs_baseline
 
 Reads each experiment's runs.csv and writes results/comparisons/<name>/ with a table (csv, md, tex) and a figure.
 """
@@ -22,7 +22,7 @@ def load(folders):
     for folder in folders:
         table = Path(folder) / "runs.csv"
         if not table.exists():
-            raise FileNotFoundError(f"{table} not found — run the experiment (or pfexp.analysis) first")
+            raise FileNotFoundError(f"{table} not found, run the experiment (or pfexp.analysis) first")
         frame = pd.read_csv(table)
         frame.insert(0, "experiment", Path(folder).name)
         frames.append(frame)

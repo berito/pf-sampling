@@ -5,7 +5,7 @@ set -u
 cd "$(dirname "$0")/.."
 
 echo "=== python ==="
-python -c "import numpy,scipy,matplotlib,pandas,cv2;print('numpy',numpy.__version__,'| scipy',scipy.__version__,'| matplotlib',matplotlib.__version__,'| opencv',cv2.__version__)"
+python -c "import numpy,scipy,matplotlib,pandas;print('numpy',numpy.__version__,'| scipy',scipy.__version__,'| matplotlib',matplotlib.__version__,'| pandas',pandas.__version__)"
 
 echo
 echo "=== upstream code (vendor/) ==="

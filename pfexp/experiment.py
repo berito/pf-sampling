@@ -3,7 +3,7 @@
     title: Does the resampling scheme matter?
     question: ...
     hypothesis: ...
-    filter: mcl                      # mcl or fastslam
+    filter: mcl                      # mcl, fastslam or gmapping
     world: {}                        # overrides for the world generator
     fixed:                           # settings shared by every run
       n_particles: 500
@@ -11,7 +11,7 @@
     vary:                            # every combination of these is run
       resampler: [multinomial, residual, stratified, systematic]
     seeds: 20                        # seeds 0..19; each seed fixes both the world and the filter's randomness
-    quick:                           # smaller version for `--quick`
+    quick:                           # smaller version for `--quick` (seeds, fixed, world and vary can be replaced)
       seeds: 3
       fixed: {n_particles: 200}
     report:
@@ -19,6 +19,7 @@
       traces: [ess, position_error]
 
 Every variant with the same seed sees exactly the same world, so differences come from the technique.
+If two numeric settings are varied, the last one goes on the x axis of the figures.
 """
 import hashlib
 import itertools
@@ -28,7 +29,8 @@ from pathlib import Path
 
 import yaml
 
-FILTERS = ("mcl", "fastslam")
+FILTERS = ("mcl", "fastslam", "gmapping")
+TECHNIQUE_KINDS = ("proposal", "resampler", "trigger", "move")
 DEFAULT_METRICS = ["position_rmse", "ate", "ess_mean", "unique_after_resampling", "nees_mean",
                    "runtime_per_step_ms"]
 DEFAULT_TRACES = ["ess", "position_error"]
@@ -71,6 +73,26 @@ class Experiment:
             for seed in self.seeds:
                 yield RunSpec(self.id, self.filter, self.world, {**self.fixed, **variant}, variant, seed)
 
+    def problems(self):
+        """Reasons this experiment cannot run yet (unknown technique, gmapping not built, ...), or []."""
+        from pfexp import registry
+
+        found = []
+        values = {kind: set() for kind in TECHNIQUE_KINDS}
+        for spec in self.runs():
+            for kind in TECHNIQUE_KINDS:
+                value = spec.settings.get(kind)
+                if value is not None:
+                    values[kind].add(value["name"] if isinstance(value, dict) else value)
+        for kind, names in values.items():
+            for name in sorted(names - set(registry.names(kind))):
+                found.append(f"{kind} '{name}' does not exist yet, add pfexp/techniques/{kind}s/{name}.py "
+                             f"(see pfexp/README.md)")
+        if self.filter == "gmapping":
+            from pfexp.filters import gmapping
+            found += gmapping.problems(self.world)
+        return found
+
     @property
     def metrics(self):
         return self.report.get("metrics", DEFAULT_METRICS)
@@ -95,19 +117,21 @@ def load(path, quick=False):
         raise ValueError(f"{path.name}: filter must be one of {FILTERS}, got {config['filter']!r}")
 
     fixed, seeds, world = dict(config.get("fixed", {})), config["seeds"], dict(config.get("world", {}))
+    vary = dict(config["vary"])
     if quick:
         small = config.get("quick", {})
         fixed.update(small.get("fixed", {}))
         world.update(small.get("world", {}))
+        vary.update(small.get("vary", {}))
         seeds = small.get("seeds", min(3, len(_seed_list(seeds))))
 
-    overlap = set(fixed) & set(config["vary"])
+    overlap = set(fixed) & set(vary)
     if overlap:
         raise ValueError(f"{path.name}: {sorted(overlap)} is both fixed and varied")
     return Experiment(
         id=path.stem, path=path, title=config["title"], question=config["question"],
         hypothesis=config.get("hypothesis", ""), filter=config["filter"], world=world, fixed=fixed,
-        vary={name: list(values) for name, values in config["vary"].items()},
+        vary={name: list(values) for name, values in vary.items()},
         seeds=_seed_list(seeds), report=config.get("report", {}),
     )
 

@@ -1,4 +1,4 @@
-"""Resample when 1/max(w) drops below threshold·N.
+"""Resample when 1/max(w) drops below threshold * N.
 
 Elfring's ParticleFilterMWR rule, imported unchanged.
 """

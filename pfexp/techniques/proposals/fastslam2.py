@@ -4,15 +4,15 @@ Borrowed from PythonRobotics SLAM/FastSLAM2/fast_slam2.py@1fe4fb9 (proposal_samp
 update_with_observation; MIT licence). The models are in `pfexp.filters.fastslam_model`.
 
 FIX (on by default; `upstream_bugs=True` reproduces upstream exactly). Upstream samples the pose from the
-motion model, then for each observation moves it to a proposal mean — but never draws from the proposal,
+motion model, then for each observation moves it to a proposal mean, but never draws from the proposal,
 never corrects the weight for it, and keeps the proposal covariance P across steps. That is not FastSLAM
 2.0. The fixed version follows Montemerlo et al. (IJCAI 2003) with known data association:
 
-  1. predict the pose mean with the noise-free motion model; its covariance is B R Bᵀ from the control noise
+  1. predict the pose mean with the noise-free motion model; its covariance is B R B^T from the control noise
   2. for each observed, already-mapped landmark: weight by the predictive likelihood
-     N(z; ẑ, Hv Σ Hvᵀ + Hf Pf Hfᵀ + Q), then update the pose Gaussian:
-     Σ ← (Hvᵀ Sf⁻¹ Hv + Σ⁻¹)⁻¹,  μ ← μ + Σ Hvᵀ Sf⁻¹ (z − ẑ)
-  3. sample the pose from N(μ, Σ)
+     N(z; z_hat, Hv S Hv^T + Hf Pf Hf^T + Q), then update the pose Gaussian (mean mu, covariance S):
+     S = inv(Hv^T inv(Sf) Hv + inv(S)),  mu = mu + S Hv^T inv(Sf) (z - z_hat)
+  3. sample the pose from N(mu, S)
   4. update the landmark EKFs (or add new landmarks) using the sampled pose
 """
 import numpy as np
@@ -22,7 +22,7 @@ from pfexp.registry import register
 from pfexp.techniques.base import Proposal
 from pfexp.techniques.proposals.fastslam1 import copy_map
 
-POSE_JITTER = 1e-6  # B R Bᵀ has no sideways component; a tiny diagonal keeps Σ invertible
+POSE_JITTER = 1e-6  # B R B^T has no sideways component; a tiny diagonal keeps S invertible
 
 
 @register("proposal", "fastslam2")
@@ -78,7 +78,7 @@ class FastSlam2(Proposal):
         return ParticleSet(poses, particles.weights, extras), log_weights
 
     def _propose_upstream(self, particles, control, observations, model):
-        """Upstream order: motion sample, then per observation weight → landmark update → move to proposal mean."""
+        """Upstream order: motion sample, then per observation weight, landmark update, move to proposal mean."""
         poses = model.predict_noisy(particles.poses, control)
         extras = copy_map(particles.extras)
         with np.errstate(divide="ignore"):

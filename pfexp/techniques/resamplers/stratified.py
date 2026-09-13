@@ -1,4 +1,4 @@
-"""Stratified resampling — Elfring's implementation, imported unchanged.
+"""Stratified resampling: Elfring's implementation, imported unchanged.
 
 One uniform draw inside each of N equal strata of the cumulative weights.
 """

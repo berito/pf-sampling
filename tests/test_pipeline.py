@@ -1,4 +1,4 @@
-"""Experiment configs, the resumable runner, the analysis and show_results.py — all on a temporary results folder."""
+"""Experiment configs, the resumable runner, the analysis and show_results.py, all on a temporary results folder."""
 import importlib.util
 import json
 

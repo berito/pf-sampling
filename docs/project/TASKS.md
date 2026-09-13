@@ -21,13 +21,15 @@ Rules:
 | M0 | **Setup complete** | vendor code clean in `vendor/`, our tools separate, gmapping builds in the container | [x] |
 | M1 | **Shareable project structure** | private material in `docs/`; vendors + datasets fetched by script; a copy without `docs/`, `vendor/`, `datasets/` rebuilds and runs | [x] |
 | M2 | **Existing code experiment-ready (plug-ins)** | localization + borrowed FastSLAM run headless, seeded, with techniques and metrics as registered plug-ins | [x] |
-| M3 | **Experiment pipeline + analysis ready** | an experiment YAML produces runs.csv, traces, tables, figures and summary.md; `python3 show_results.py` shows everything with no install | [~] |
+| M3 | **Experiment pipeline + analysis ready** | an experiment YAML produces runs.csv, traces, tables, figures and summary.md; `python3 show_results.py` shows everything with no install | [x] |
 | M4 | **Core experiments done** | E01–E04: resampling scheme, when to resample, proposal, particle count | [ ] |
 | M5 | **New sampler added** | resample-move implemented as a plug-in and compared against M4 | [ ] |
 | M6 | *(optional)* **Real-data check** | gmapping ESS sweep on the CARMEN logs | [ ] |
+| M7 | **Report (LaTeX)** | `make -C report` builds report/report.pdf with the background, method and every experiment's results | [~] |
+| M8 | *(personal, after the report)* **Teach and share: blog article** | an article on your GitHub page explaining particle filters, SLAM, the filter families and the sampling techniques, with this project's experiment results | [ ] |
 
 ## Open decisions
-- *(none)*
+- **Before making the GitHub repo public again:** remove `docs/` from the whole git history (it holds 43 publisher paper PDFs, the proposal PDF and personal notes, all pushed in the first commit), e.g. with `git filter-repo --path docs --invert-paths` + force push, or a fresh repo; and ignore `docs/` in `.gitignore`. Repo made private on 2026-09-13 until the work is finished.
 
 ## Working environment
 All code runs inside the devcontainer (image `pf-sampling:dev`); nothing is installed on the host.
@@ -50,6 +52,7 @@ pf-sampling/
 ├─ tools/               fetch_vendors.py · fetch_datasets.py · build_gmapping.sh · patches/
 ├─ pfexp/           registry · techniques/ · filters/ · worlds · metrics/ · runner · analysis/
 ├─ experiments/         E01…E04 YAML configs
+├─ report/              LaTeX report: main.tex · sections/ · references.bib · Makefile
 ├─ tests/
 │  ── FETCHED / GENERATED (delete freely, recreatable) ──
 ├─ vendor/              ← tools/fetch_vendors.py     (gitignore entry commented out until sharing)
@@ -125,22 +128,64 @@ pf-sampling/
 - [x] B8 `show_results.py` — standard library only: terminal summary + self-contained `results/report.html`
 - [x] B9 `--quick` mode — small rerun of every experiment into `results/quick/`, then shown the same way
 - [x] B10 Test on a clean copy without the container: plain `python3 show_results.py` shows the report
-- [~] B7 ⏸ CHECKPOINT — review with user
+- [x] B11 Run the rest without Claude: root `Makefile` with short commands (host or container; `make status` shows runs
+      done / to do / made with older code); configs for E01–E06 ready (E01 and E03 split into localization + SLAM parts;
+      E05 skipped with a reason until the technique exists; E06 runs gmapping through the runner); guides
+      `experiments/README.md` + `report/README.md`; `make report-preview`
+- [x] B12 Agent tooling separated from the shared project: milestone checker + its tests in `docs/project/agent/` (moved to `.claude/tools/` in B14)
+      (also checks that no shared file mentions private material); `CLAUDE.md` → `.claude/CLAUDE.md`; milestone wording
+      removed from configs, guides, Makefile and tests
+- [x] B13 Audit: product files free of working material (removed a private-note reference in `mcl_model.py` and a Claude
+      mention in `.gitignore`; checker now also flags private note names and process words); inventory of all working
+      material + sharing checklist in `docs/project/agent/README.md` (now `.claude/tools/README.md`)
+- [x] B14 All of Claude's tooling in `.claude/tools/` (one folder to untrack, next to `.claude/CLAUDE.md`); exploration
+      script `grid_rbpf_headless.py`, its 2D-Grid-SLAM repo and OpenCV deleted (unused);
+      typographic characters (em dashes, arrows, Unicode maths) replaced with plain text in all product files
+- [x] B7 ⏸ CHECKPOINT — reviewed with user; next: user commits, pushes and tests on the server computer
 
 ## M4 — Core experiments done (one YAML each)
-- [ ] C1 `E01_resampling_scheme` — 4 schemes, localization + FastSLAM1
-- [ ] C2 `E02_when_to_resample` — every step vs ESS threshold (swept) vs max-weight
-- [ ] C3 `E03_proposal` — FS1 vs FS2 (SLAM); SIR vs extended Kalman PF vs auxiliary PF (localization)
+Configs are ready; run them with `make run E=E01` … `E=E04` (guide: experiments/README.md). Progress: `make status`, or `python .claude/tools/check_milestones.py M4`.
+- [ ] C1 `E01_resampling_scheme_localization` + `E01_resampling_scheme_slam` — 4 schemes × N, localization + FastSLAM1
+- [ ] C2 `E02_when_to_resample` — every step, never, ESS threshold (0.2/0.5/0.8), max-weight (0.1/0.2/0.5)
+- [ ] C3 `E03_proposal_localization` (motion model vs auxiliary PF vs extended Kalman PF × N) + `E03_proposal_slam` (FS1 vs FS2 × N)
 - [ ] C4 `E04_particle_count` — sweep N, RMSE + runtime
-- [ ] C5 ⏸ CHECKPOINT — results review
+- [ ] C5 ⏸ CHECKPOINT — results review (note: mean NEES reaches ~1e8, dominated by the uniform start — decide whether to report median or skip early steps)
 
 ## M5 — New sampler added (the only new filter code)
 - [ ] D1 `techniques/moves/resample_move_mh.py` — Metropolis-Hastings moves after resampling
-- [ ] D2 Add it to E01/E04 configs; compare against the M4 results with `compare.py`
+- [ ] D2 Run `E05_resample_move` (config ready, skipped until D1 exists); compare against the M4 results with `make compare`
 - [ ] D3 (optional) HMC move · unscented proposal
 
 ## M6 — (optional) Real-data check with gmapping
-- [ ] E1 Sweep the resampling threshold and N on the CARMEN logs; ESS only (no ground truth)
+- [ ] E1 `E06_gmapping_resampling` — resampling threshold × N on the Intel log; ESS only (no ground truth). Config ready: `make run E=E06`
+
+## M7 — Report (LaTeX)
+- [x] R1 Structure: `report/` (main.tex, macros.tex, sections/, references.bib, Makefile), LaTeX layer in the image,
+      build files in `.build/report/`; experiment tables and figures read straight from `results/` (red placeholder
+      until an experiment has run). Verified: skeleton builds; pointed at quick E01 results it includes table + figure
+- [ ] R2 Background: SLAM as a DBN, Rao-Blackwellization, discrete → continuous inference
+- [ ] R3 Particle filters: importance sampling, proposals, resampling, MCMC moves
+- [ ] R4 Method: filters, worlds, implementation and upstream corrections, metrics
+- [ ] R5 Results: one subsection per experiment (choose report columns so tables stay readable)
+- [ ] R6 Discussion, conclusion, abstract, appendix; check references against the papers
+- [ ] R7 Final check: `make -C report` builds from a clean copy; no TODO left
+- [ ] R8 ⏸ CHECKPOINT — review with user
+
+## M8 — Teach and share: blog article *(personal, not a course deliverable; start after M7)*
+Goal: understand particle filters properly by explaining them, and have a public technical article for your profile.
+- [ ] T1 Decide where it lives: draft in this project (`blog/`) and publish to your GitHub Pages site; pick the format
+      (Markdown for Jekyll/GitHub Pages, or a notebook-style post)
+- [ ] T2 The particle filter from scratch: Bayes filtering, importance sampling, weights, resampling — with small
+      pictures of particles
+- [ ] T3 SLAM as a graphical model and Rao-Blackwellization: why FastSLAM samples the path and keeps a small EKF per landmark
+- [ ] T4 The filter families: MCL, FastSLAM 1.0, FastSLAM 2.0, gmapping, auxiliary PF, extended Kalman PF — what each changes
+- [ ] T5 Sampling techniques and their drawbacks: resampling schemes, when to resample, proposals, MCMC moves
+      (degeneracy, impoverishment, cost)
+- [ ] T6 What the experiments showed: figures and tables from `results/`, in plain language
+- [ ] T7 Lessons from reusing upstream code: the bugs found and why checking borrowed code matters
+- [ ] T8 Review for readers outside the course: clear, correct, links to the repo and the papers
+- [ ] T9 Publish on your GitHub page; link it from README.md
+- [ ] T10 ⏸ CHECKPOINT — review with user before publishing
 
 ---
 
@@ -175,3 +220,12 @@ pf-sampling/
 - 2026-09-13 — Project renamed `pf-sampling` and moved out of the pgm_course repo to `~/Documents/code_base/learning/pf-sampling` (to become its own GitHub repo). Container path, image and container renamed; image + gmapping rebuilt; 94 tests, vendor and dataset checks, gmapping run and show_results --quick all pass.
 - 2026-09-13 — Made the project independent of where it lives: package moved from `src/pfexp/` to `pfexp/` at the root (no PYTHONPATH needed; removed from the Dockerfile and `workspaceFolder` from devcontainer.json); gmapping linked with `$ORIGIN/../lib` instead of an absolute path (three-level escaping through make/sh/eval). Verified: copied project mounted at `/some/other/place/my-project` without rebuild — gmapping, runner, vendor check, 94 tests, show_results --quick all pass.
 - 2026-09-13 — User ran `git init` + `git add .` in pf-sampling: embedded-repo warnings for vendor/. `vendor/` now ignored in .gitignore and its gitlinks removed from the index (`git rm -r --cached -f vendor`, files untouched). Commit left to the user.
+- 2026-09-13 — First commit pushed to github.com/berito/pf-sampling (public) including docs/ (paper PDFs, proposal, personal notes). User made the repo private until the work is finished; removing docs/ from history is an open item before it goes public.
+- 2026-09-13 — M7 (LaTeX report) added; R1 structure created now, text written at the end. LaTeX layer added to the image after heavy Python (1m20s, plus lmodern 51s); skeleton builds; inclusion of results verified against quick E01. Figures now saved on a white background for print.
+- 2026-09-13 — M8 added (personal): a blog article on the user's GitHub page explaining particle filters, SLAM, the filter families and sampling techniques with the experiment results. Not a course deliverable; starts after the report (M7).
+- 2026-09-13 — B11 done (plan approved by user): the rest of the project can be run without Claude. A milestone checker checks every milestone and names the next command; M0–M3 pass automatically (110 tests, pipeline run + resume + show_results in a temp folder). Root Makefile; experiments/README.md and report/README.md guides. Configs E01–E06 written and verified with --dry-run and --quick only (full runs left to the user). Decisions: E01/E03 split per filter; gmapping is a filter in the runner (E06, reproducible with -randseed); experiments that cannot run yet are skipped with the reason. Fixed: numeric sweep plots (settings were plotted as text), crash with more than 8 variants, report not rebuilding when results appear, findings claiming significance from one seed. M3 waiting for checkpoint review.
+- 2026-09-13 — B12 done (user's request): agent and project-management tooling must not be part of the shared code, which has to read and run as ordinary human-written code. Milestone checker moved to `docs/project/agent/` (run: `python docs/project/agent/check_milestones.py`), with a new check that no shared file mentions `docs/`, `.claude/`, `CLAUDE.md` or the checker; `CLAUDE.md` moved to `.claude/` (added to the "uncomment when sharing" block of .gitignore); `make check` replaced by `make status` (runner dry run, now also counting runs made with older code); milestone labels removed from configs and guides; the docs-reference pytest moved into the private checker. 108 project tests + 2 private tests pass; M0–M3 checks pass.
+- 2026-09-13 — B13 done (user's request: how we work and what we produce must be separable). Audit of every product file: clean except a "(docs: VENDOR_REVIEW, Elfring #1)" reference in `pfexp/filters/mcl_model.py` and a Claude comment in `.gitignore`, both removed. `docs/project/agent/README.md` lists every working file/tool with its location, the product folders, and the steps to share the product without the working material. Open for the user: whether `.gitignore` should drop its "uncomment when sharing" block, and whether `.vscode/` (personal ROS settings) should stay tracked.
+- 2026-09-13 — B14 done (user: anything Claude uses must sit where it can be untracked). Tooling moved from `docs/project/agent/` to `.claude/tools/`, so `.claude/` holds everything of Claude's and `docs/` only the user's notes; `# .claude/` added next to `# docs/` in .gitignore. `tools/grid_rbpf_headless.py` (setup-phase exploration, unused by the product) moved there; its upstream repo removed from vendors.yaml, THIRD_PARTY.md and README credits, and opencv-python-headless from requirements-base.txt (image rebuilt). Em dashes, arrows, middle dots and Unicode maths replaced with plain text in product files; the checker now flags them.
+- 2026-09-13 — B14 follow-up (user): unused things are deleted, not moved with a note; files never narrate history or past reasons (that goes in commit messages). Deleted `grid_rbpf_headless.py` and the local 2D-Grid-SLAM clone; rewrote change-log wording in `extended_kalman.py` ("used ...; now ...") and removed history notes from E02, E03 and datasets.yaml. The private checker now also flags change-log wording. Rule added to `.claude/CLAUDE.md`.
+- 2026-09-13 — **M3 done** (user asked to complete it). Final check: a copy with exactly the files git would push, without `docs/`, `.claude/` and `.vscode/`, in a new container: `make container setup test status quick report` all succeeded (vendors + datasets fetched, gmapping built, 108 tests, quick run of all experiments, report built with placeholders for the not-yet-run experiments). Next: user tests on the server, then M4 (`make run E=E01` ... `E=E04`).

@@ -1,0 +1,15 @@
+\section{SLAM as a Graphical Model}\label{sec:background}
+
+\subsection{Dynamic Bayesian network}
+% - Variables: poses x_{1:t}, controls u_{1:t}, observations z_{1:t}, map m.
+% - The DBN structure and its factorization; filtering as inference on it (Koller & Friedman ch. 6, 15).
+
+\subsection{Rao-Blackwellization}
+% - Given the full trajectory, landmarks are conditionally independent:
+%   p(x_{1:t}, m | z, u) = p(x_{1:t} | z, u) prod_k p(m_k | x_{1:t}, z).
+% - Sample the trajectory, update each landmark analytically (one small EKF per landmark).
+
+\subsection{From discrete to continuous inference}
+% - What carries over from the discrete case and what doesn't; why sampling.
+
+\todo{Background.}

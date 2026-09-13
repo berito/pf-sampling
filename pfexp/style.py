@@ -11,7 +11,7 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt  # noqa: E402
 
 CATEGORICAL = ["#2a78d6", "#eb6834", "#1baf7a", "#eda100", "#e87ba4", "#008300", "#4a3aa7", "#e34948"]
-SEQUENTIAL = ["#86b6ef", "#5598e7", "#2a78d6", "#1c5cab", "#104281", "#0d366b"]  # light → dark blue
+SEQUENTIAL = ["#86b6ef", "#5598e7", "#2a78d6", "#1c5cab", "#104281", "#0d366b"]  # light to dark blue
 INK, INK_MUTED, GRID = "#0b0b0b", "#52514e", "#e4e3df"
 
 # Fixed slot per technique, grouped by kind so a figure never shows two techniques with the same slot.
@@ -31,7 +31,7 @@ NAMES = {
     "none": "No move", "resample_move_mh": "Resample-move (MH)",
 }
 
-# metric → (display name, unit, which direction is better: "lower", "higher", or a target value)
+# metric: (display name, unit, which direction is better: "lower", "higher", or a target value)
 METRICS = {
     "position_rmse": ("Position RMSE", "m", "lower"),
     "heading_rmse": ("Heading RMSE", "rad", "lower"),
@@ -43,6 +43,7 @@ METRICS = {
     "ess_min": ("Min ESS / N", "", "higher"),
     "unique_after_resampling": ("Distinct particles after resampling / N", "", "higher"),
     "resample_rate": ("Resampling rate", "", None),
+    "resample_count": ("Resampling steps", "", None),
     "collapses": ("Weight collapses", "", "lower"),
     "nees_mean": ("Mean NEES", "", 3.0),
     "nees_median": ("Median NEES", "", 3.0),
@@ -74,7 +75,7 @@ def better(name):
 
 
 def technique_name(value):
-    """'systematic' → 'Systematic'; {'name': 'ess_threshold', 'threshold': 0.5} → 'ESS threshold (0.5)'."""
+    """'systematic' gives 'Systematic'; {'name': 'ess_threshold', 'threshold': 0.5} gives 'ESS threshold (0.5)'."""
     if isinstance(value, dict):
         params = ", ".join(str(v) for k, v in value.items() if k != "name")
         base = NAMES.get(value["name"], value["name"])
@@ -92,7 +93,8 @@ def colours(values):
         name = value["name"] if isinstance(value, dict) else value
         slot = SLOTS.get(name)
         if slot is None or slot in used:  # unknown technique or a second variant of the same one
-            slot = next(i for i in range(len(CATEGORICAL)) if i not in used)
+            free = [i for i in range(len(CATEGORICAL)) if i not in used]
+            slot = free[0] if free else len(result)  # more variants than colours: colours repeat
         used.add(slot)
         result.append(CATEGORICAL[slot % len(CATEGORICAL)])
     return result
@@ -108,5 +110,5 @@ def apply():
         "axes.grid": True, "grid.color": GRID, "grid.linewidth": 0.6, "axes.axisbelow": True,
         "xtick.color": INK_MUTED, "ytick.color": INK_MUTED, "xtick.major.size": 0, "ytick.major.size": 0,
         "lines.linewidth": 2, "legend.frameon": False, "legend.fontsize": 8,
-        "figure.facecolor": "#fcfcfb", "axes.facecolor": "#fcfcfb", "savefig.facecolor": "#fcfcfb",
+        "figure.facecolor": "white", "axes.facecolor": "white", "savefig.facecolor": "white",
     })

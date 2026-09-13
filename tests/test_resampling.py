@@ -47,7 +47,7 @@ def test_same_seed_same_result(name):
 
 
 def test_unbiased_and_variance_ordering():
-    """Mean offspring count is N·w for every scheme; its spread follows the textbook ordering."""
+    """Mean offspring count is N * w for every scheme; its spread follows the textbook ordering."""
     weights = np.array([0.1, 0.25, 0.2, 0.15, 0.3])
     stats = {}
     for name in RESAMPLERS:

@@ -16,12 +16,10 @@ changed. We only copy from the MIT-licensed repositories.
 | `particle_filter_tutorial/` | [jelfring/particle-filter-tutorial](https://github.com/jelfring/particle-filter-tutorial) | `e6014b7` | MIT | localization filters and the four resampling schemes, imported unchanged |
 | `pythonrobotics/` | [AtsushiSakai/PythonRobotics](https://github.com/AtsushiSakai/PythonRobotics) (only `SLAM/FastSLAM1`, `SLAM/FastSLAM2`, `utils`) | `1fe4fb9` | MIT | FastSLAM 1.0 / 2.0 functions, copied into `pfexp/` because the scripts rely on module globals |
 | `openslam_gmapping/` | [OpenSLAM-org/openslam_gmapping](https://github.com/OpenSLAM-org/openslam_gmapping) | `79ef0b0` | CC BY-NC-SA 2.0 | grid RBPF on real logs; built from a patched copy in `.build/`, never copied |
-| `grid_rbpf_python/` | [toolbuddy/2D-Grid-SLAM](https://github.com/toolbuddy/2D-Grid-SLAM) | `9364e8c` | GPL-3.0 | small Python grid RBPF, run by `tools/grid_rbpf_headless.py`, never copied |
 
 **Licence notes**
 - gmapping is **non-commercial** (CC BY-NC-SA 2.0). `tools/patches/0001-gmapping-modern-toolchain-fixes.patch`
   is a diff of that code, so it carries the same licence.
-- 2D-Grid-SLAM is GPL-3.0. We only run it; none of its code is copied into this project.
 
 ### Borrowed functions
 
@@ -60,8 +58,5 @@ The same files are linked from the [IPB Bonn datasets page](https://www.ipb.uni-
 - **gmapping** does not build with a current toolchain as-is (see `tools/README.md`). It writes
   `rawpath.dat` and one `w-NNN.dat` per particle into its working directory, so run it from an
   output folder.
-- **2D-Grid-SLAM** resamples multinomially every step with a motion-only proposal, so its particles
-  degenerate quickly: with very few particles all weights can hit zero
-  (`RuntimeWarning: invalid value encountered in divide` in `ParticleFilter.py`).
 - None of the upstream code computes trajectory error against ground truth, and none implements
   resample-move or an unscented proposal.

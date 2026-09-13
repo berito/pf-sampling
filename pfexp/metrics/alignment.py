@@ -3,7 +3,7 @@ import numpy as np
 
 
 def fit_rigid_2d(source, target):
-    """Rotation R and translation t minimizing ||R·source + t − target|| (Kabsch, no scaling). Points (N, 2)."""
+    """Rotation R and translation t minimizing ||R @ source + t - target|| (Kabsch, no scaling). Points (N, 2)."""
     source_mean, target_mean = source.mean(axis=0), target.mean(axis=0)
     H = (source - source_mean).T @ (target - target_mean)
     U, _, Vt = np.linalg.svd(H)

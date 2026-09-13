@@ -9,7 +9,7 @@ Changes:
   don't line up one-to-one with the upstream loop.
 - Log likelihood instead of likelihood, to avoid underflow with many landmarks.
 - FIX (optional, on by default): the angle residual is wrapped to [-pi, pi). Upstream compares raw
-  angles, so a small error across ±pi looks like ~2pi (docs: VENDOR_REVIEW, Elfring #1).
+  angles, so a small error across ±pi looks like ~2pi.
   `wrap_angle_residual=False` reproduces the upstream behaviour exactly.
 """
 from dataclasses import dataclass

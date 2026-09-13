@@ -5,7 +5,7 @@
     python3 show_results.py --no-open    don't open the report in a browser
 
 Prints a summary of each experiment and writes one self-contained page, results/report.html,
-with all tables and figures.
+with all tables and figures. Set PFEXP_RESULTS to read results from another folder.
 """
 import argparse
 import base64
@@ -19,7 +19,15 @@ from datetime import datetime
 from pathlib import Path
 
 PROJECT = Path(__file__).resolve().parent
-RESULTS = PROJECT / "results"
+RESULTS = Path(os.environ["PFEXP_RESULTS"]).resolve() if os.environ.get("PFEXP_RESULTS") else PROJECT / "results"
+def shown(path):
+    """Path as shown to the reader: relative to the project when it is inside it."""
+    try:
+        return path.relative_to(PROJECT)
+    except ValueError:
+        return path
+
+
 NOT_EXPERIMENTS = {"quick", "baseline", "comparisons"}
 
 
@@ -49,7 +57,7 @@ def print_summary(summary):
     print(text_table(summary["table"]["header"], summary["table"]["rows"]))
     print("(mean ± standard deviation over seeds)\n")
     for finding in summary["findings"]:
-        print(f"  • {finding}")
+        print(f"  - {finding}")
     for note in summary["notes"]:
         print(f"  ! {note}")
     print()
@@ -114,14 +122,14 @@ def write_report(summaries, folder, quick):
     nav = "".join(f'<a href="#{html.escape(s["id"])}">{html.escape(s["title"])}</a>' for s in summaries)
     page = f"""<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Results — {html.escape(title)}</title><style>{STYLE}</style></head>
+<title>Results: {html.escape(title)}</title><style>{STYLE}</style></head>
 <body><main>
 <h1>{html.escape(title)}</h1>
-<p class="muted">{kind} · {len(summaries)} experiment{"s" if len(summaries) != 1 else ""} · {runs} runs · computed on {html.escape(", ".join(hosts))}</p>
+<p class="muted">{kind} | {len(summaries)} experiment{"s" if len(summaries) != 1 else ""} | {runs} runs | computed on {html.escape(", ".join(hosts))}</p>
 <nav>{nav}</nav>
 {"".join(experiment_section(s) for s in summaries)}
 <footer class="muted">Generated {datetime.now():%Y-%m-%d %H:%M} by show_results.py.
-Each experiment's tables (csv, md, tex) and figures (pdf, png) are in its folder under {html.escape(str(folder.relative_to(PROJECT)))}/.</footer>
+Each experiment's tables (csv, md, tex) and figures (pdf, png) are in its folder under {html.escape(str(shown(folder)))}/.</footer>
 </main></body></html>
 """
     path = folder / "report.html"
@@ -161,14 +169,14 @@ def main():
     folder = RESULTS / "quick" if args.quick else RESULTS
     summaries = find_summaries(folder)
     if not summaries:
-        print(f"No results found in {folder.relative_to(PROJECT)}/.")
-        print("Run the experiments first, or try:  docker exec pf-sampling-dev python show_results.py --quick")
+        print(f"No results found in {shown(folder)}/.")
+        print("Run the experiments first (make run E=...), or see a small version:  make quick")
         return 1
 
     for summary in summaries:
         print_summary(summary)
     report = write_report(summaries, folder, args.quick)
-    print(f"Full report with figures: {report.relative_to(PROJECT)}")
+    print(f"Full report with figures: {shown(report)}")
     if not args.no_open:
         webbrowser.open(report.as_uri())
     return 0

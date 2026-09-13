@@ -1,4 +1,4 @@
-"""Resample when the effective sample size 1/sum(w²) drops below threshold·N.
+"""Resample when the effective sample size 1/sum(w^2) drops below threshold * N.
 
 Elfring's ParticleFilterNEPR rule, imported unchanged.
 """

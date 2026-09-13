@@ -13,7 +13,7 @@ gmapping) as examples.
 python3 show_results.py
 ```
 
-This needs only Python 3 — nothing to install. It prints a summary of each experiment and opens
+This needs only Python 3, nothing to install. It prints a summary of each experiment and opens
 `results/report.html` with all tables and figures.
 
 To check the code really produces them, rerun a small version of every experiment (a few minutes,
@@ -45,51 +45,54 @@ experiment pipeline are ready. The experiments themselves are being run.
 
 ## How to run
 
-You only need Docker.
+You only need Docker (and `make`, which most systems have).
 
-1. Build and start the container:
-
-   ```bash
-   docker build -t pf-sampling:dev .devcontainer
-   docker run -d --name pf-sampling-dev --user $(id -u):$(id -g) -e PFEXP_HOST=$(hostname) \
-     -v "$PWD":/workspaces/pf-sampling \
-     -w /workspaces/pf-sampling \
-     pf-sampling:dev sleep infinity
-   ```
-
-   Or, in VS Code, open the folder and choose **Reopen in Container**.
-
-2. Download the upstream code and datasets, and build gmapping:
+1. Build and start the container, then download the upstream code and datasets and build gmapping:
 
    ```bash
-   docker exec pf-sampling-dev bash .devcontainer/postcreate.sh
+   make container
+   make setup
    ```
 
-   (VS Code does this automatically on the first start.)
+   Or, in VS Code, open the folder and choose **Reopen in Container** (it runs the setup by itself).
 
-3. Run an experiment:
+2. Check that everything works, and see which experiment runs are done:
 
    ```bash
-   docker exec pf-sampling-dev python -m pfexp.run experiments/E01_resampling_scheme.yaml
+   make test
+   make status
    ```
 
-   Results go to `results/E01_resampling_scheme/` (tables, figures and `summary.md`). If it is
-   stopped, run the same command again: finished runs are kept and skipped.
+3. Run an experiment, and look at the results:
 
-To check that everything is downloaded correctly, run `python tools/fetch_vendors.py --check`
-and `python tools/fetch_datasets.py --check` inside the container. To run the tests:
-`docker exec pf-sampling-dev python -m pytest`.
+   ```bash
+   make run E=E02
+   make results
+   ```
 
-How the code is organised and how to add a sampling technique: [pfexp/README.md](pfexp/README.md).
+   Results go to `results/<experiment>/` (tables, figures and `summary.md`). If a run is stopped, run the
+   same command again: finished runs are kept and skipped.
+
+`make` on its own lists every command. Each one is also written out in full in the guides, if you prefer
+not to use make:
+
+- [experiments/README.md](experiments/README.md): the experiments, the order to run them in, and adding one
+- [report/README.md](report/README.md): building and writing the report
+- [pfexp/README.md](pfexp/README.md): how the code is organised, and adding a sampling technique
+- [tools/README.md](tools/README.md): download, build and gmapping scripts
+
+Without make: `docker exec pf-sampling-dev <command>`, e.g. `docker exec pf-sampling-dev python -m pytest`.
 
 ## Folders
 
 ```
 show_results.py  shows the results (plain Python 3)
-experiments/   one config file per experiment
+Makefile       short commands (`make` lists them)
+report/        the LaTeX report (`make report` builds report/report.pdf)
+experiments/   one config file per experiment, and the guide to running them
 pfexp/     project code (filters, sampling techniques, metrics, runner)
 tests/         tests
-tools/         download, build and run scripts
+tools/         download, build and check scripts
 vendor/        upstream code (downloaded, never edited)
 datasets/      datasets (downloaded)
 results/       experiment results
@@ -98,14 +101,12 @@ results/       experiment results
 
 ## Credits
 
-- **Particle filter tutorial** by Joris Elfring, Elena Torta and René van de Molengraft —
+- **Particle filter tutorial** by Joris Elfring, Elena Torta and René van de Molengraft:
   [github.com/jelfring/particle-filter-tutorial](https://github.com/jelfring/particle-filter-tutorial) (MIT)
-- **PythonRobotics** (FastSLAM) by Atsushi Sakai and contributors —
+- **PythonRobotics** (FastSLAM) by Atsushi Sakai and contributors:
   [github.com/AtsushiSakai/PythonRobotics](https://github.com/AtsushiSakai/PythonRobotics) (MIT)
-- **GMapping** by Giorgio Grisetti, Cyrill Stachniss and Wolfram Burgard —
+- **GMapping** by Giorgio Grisetti, Cyrill Stachniss and Wolfram Burgard:
   [github.com/OpenSLAM-org/openslam_gmapping](https://github.com/OpenSLAM-org/openslam_gmapping) (CC BY-NC-SA 2.0, non-commercial)
-- **2D-Grid-SLAM** by toolbuddy —
-  [github.com/toolbuddy/2D-Grid-SLAM](https://github.com/toolbuddy/2D-Grid-SLAM) (GPL-3.0)
 - **Intel Research Lab** dataset by Dirk Hähnel and **ACES3** dataset by Patrick Beeson, from
   [Cyrill Stachniss's datasets page](http://www2.informatik.uni-freiburg.de/~stachnis/datasets.html)
 

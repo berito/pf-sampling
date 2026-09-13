@@ -1,11 +1,13 @@
 """Run experiments. Runs that are already stored are skipped, so this can be stopped and restarted anytime,
 on any computer that has the same results/ folder.
 
-    python -m pfexp.run experiments/E01_resampling_scheme.yaml
+    python -m pfexp.run experiments/E01_resampling_scheme_localization.yaml
     python -m pfexp.run experiments/*.yaml --jobs 8
     python -m pfexp.run experiments/*.yaml --quick          small version into results/quick/
-    python -m pfexp.run experiments/E01_resampling_scheme.yaml --rerun    run everything again
-    python -m pfexp.run experiments/*.yaml --dry-run        only show what would run
+    python -m pfexp.run experiments/E01_resampling_scheme_localization.yaml --rerun    run everything again
+    python -m pfexp.run experiments/*.yaml --dry-run        only show what is done and what would run
+
+An experiment that cannot run yet (a technique not written, gmapping not built) is skipped with the reason.
 """
 import argparse
 import multiprocessing
@@ -24,18 +26,22 @@ def execute(spec_dict, folder):
     import numpy as np  # noqa: F401  (imported after the thread limits are set)
 
     from pfexp.filters.fastslam import run_fastslam
+    from pfexp.filters.gmapping import run_gmapping
     from pfexp.filters.mcl import run_mcl
     from pfexp.metrics import compute_all
     from pfexp.worlds import localization_world, slam_world
 
     spec = E.RunSpec(**spec_dict)
     started = time.perf_counter()
-    if spec.filter == "mcl":
-        log = run_mcl(localization_world(spec.seed, **spec.world), filter_seed=spec.seed, **spec.settings)
+    if spec.filter == "gmapping":  # an external program: it returns metrics and traces directly
+        metrics, traces = run_gmapping(spec.world, filter_seed=spec.seed, **spec.settings)
     else:
-        log = run_fastslam(slam_world(spec.seed, **spec.world), filter_seed=spec.seed, **spec.settings)
-    metrics = compute_all(log)
-    R.save_run(Path(folder), spec, metrics, log.traces(), time.perf_counter() - started)
+        if spec.filter == "mcl":
+            log = run_mcl(localization_world(spec.seed, **spec.world), filter_seed=spec.seed, **spec.settings)
+        else:
+            log = run_fastslam(slam_world(spec.seed, **spec.world), filter_seed=spec.seed, **spec.settings)
+        metrics, traces = compute_all(log), log.traces()
+    R.save_run(Path(folder), spec, metrics, traces, time.perf_counter() - started)
     return spec.run_id, time.perf_counter() - started
 
 
@@ -50,8 +56,10 @@ def run_experiment(experiment, quick=False, rerun=False, jobs=1, dry_run=False, 
     if folder.exists():
         R.clean_partial_files(folder)
     specs, todo = pending_runs(experiment, folder, rerun)
+    older = R.count_older_runs(folder, [s.run_id for s in specs])
     print(f"{experiment.id}: {len(specs)} runs, {len(specs) - len(todo)} already done, {len(todo)} to run"
-          + (" (quick)" if quick else ""))
+          + (" (quick)" if quick else "")
+          + (f"; {older} made with older code (--rerun to redo them)" if older and not rerun else ""))
     if dry_run or not todo:
         if report and not dry_run and specs:
             _report(experiment, folder)
@@ -95,14 +103,27 @@ def main(argv=None):
     for variable in ("OMP_NUM_THREADS", "OPENBLAS_NUM_THREADS", "MKL_NUM_THREADS"):
         os.environ.setdefault(variable, "1")  # one thread per worker; the workers are the parallelism
 
+    skipped = {}
     try:
         for config in args.configs:
             experiment = E.load(config, quick=args.quick)
+            problems = experiment.problems()
+            if problems:  # e.g. a technique that is planned but not written yet: run the other experiments
+                skipped[experiment.id] = problems
+                print(f"{experiment.id}: skipped, cannot run yet")
+                continue
             run_experiment(experiment, quick=args.quick, rerun=args.rerun, jobs=args.jobs,
                            dry_run=args.dry_run, report=not args.no_report)
     except KeyboardInterrupt:
         print("\nInterrupted. Finished runs are kept; run the same command again to continue.", flush=True)
         return 130
+    if skipped:
+        print("\nSkipped experiments:")
+        for experiment_id, problems in skipped.items():
+            print(f"  {experiment_id}:")
+            for problem in problems:
+                print(f"    - {problem}")
+    return 0
 
 
 if __name__ == "__main__":

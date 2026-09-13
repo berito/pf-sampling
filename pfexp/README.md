@@ -8,26 +8,28 @@ particles.py       particle set and small helpers (normalizing, ESS, pose mean, 
 runlog.py          what every run records, step by step
 worlds.py          simulated worlds, the same for every technique with the same seed
 vendor.py          the only way to reach vendor/ and datasets/
-filters/           localization (mcl) and FastSLAM, built on the upstream code
-techniques/        resamplers/ · triggers/ · proposals/ · moves/   — one file per technique
+filters/           localization (mcl), FastSLAM, and gmapping (runs the C++ program), built on the upstream code
+techniques/        resamplers/, triggers/, proposals/, moves/: one file per technique
 metrics/           one file per metric
 ```
 
-A filter step is: **proposal** (sample new poses, compute weights) → **trigger** (resample now?) →
-**resampler** (which particles survive) → **move** (optional, after resampling).
+A filter step is: **proposal** (sample new poses, compute weights), then **trigger** (resample now?), then
+**resampler** (which particles survive), then **move** (optional, after resampling).
 
 ## Running experiments
 
+The guide is [experiments/README.md](../experiments/README.md) (with short `make` commands). The underlying commands:
+
 ```bash
-python -m pfexp.run experiments/E01_resampling_scheme.yaml     # runs what is missing, then builds the report
+python -m pfexp.run experiments/E01_resampling_scheme_localization.yaml     # runs what is missing, then builds the report
 python -m pfexp.run experiments/*.yaml --quick                 # small version into results/quick/
-python -m pfexp.analysis experiments/E01_resampling_scheme.yaml  # rebuild tables and figures only
-python -m pfexp.compare results/E01_resampling_scheme results/E05_resample_move   # across experiments
+python -m pfexp.analysis experiments/E01_resampling_scheme_localization.yaml  # rebuild tables and figures only
+python -m pfexp.compare results/E01_resampling_scheme_localization results/E05_resample_move   # across experiments
 ```
 
 An experiment is a YAML file: a question, the fixed settings, the settings to vary, and the number of
-seeds (see `experiment.py`). Each run is stored as one file named by a hash of its settings and seed, so
-a run that already exists — from this computer or another one — is skipped.
+seeds (see `experiment.py`). Set `PFEXP_RESULTS=/some/folder` to store results somewhere other than `results/`. Each run is stored as one file named by a hash of its settings and seed, so
+a run that already exists (from this computer or another one) is skipped.
 
 ## Running a filter
 
@@ -71,11 +73,11 @@ What each kind implements:
 
 | Kind | Folder | Method |
 |---|---|---|
-| resampler | `techniques/resamplers/` | `resample(weights) → indices` |
-| trigger | `techniques/triggers/` | `should_resample(weights) → bool` |
-| proposal | `techniques/proposals/` | `propose(particles, control, measurement, model, resampler) → (particles, log_weights)`; set `filter = "mcl"` or `"fastslam"` |
-| move | `techniques/moves/` | `move(particles, context) → particles` |
-| metric | `metrics/` | `compute(log) → dict` |
+| resampler | `techniques/resamplers/` | `resample(weights)` returns indices |
+| trigger | `techniques/triggers/` | `should_resample(weights)` returns a bool |
+| proposal | `techniques/proposals/` | `propose(particles, control, measurement, model, resampler)` returns `(particles, log_weights)`; set `filter = "mcl"` or `"fastslam"` |
+| move | `techniques/moves/` | `move(particles, context)` returns particles |
+| metric | `metrics/` | `compute(log)` returns a dict |
 
 If a technique takes parameters, accept them in `__init__` and return them from `describe()` so they are
 recorded with every run. In a config: `trigger: {name: ess_threshold, threshold: 0.5}`.

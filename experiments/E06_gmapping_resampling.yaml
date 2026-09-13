@@ -1,0 +1,25 @@
+# E06. Needs gmapping built (bash tools/build_gmapping.sh) and the datasets fetched.
+# Real data has no ground truth, so only sampling metrics are recorded. One run takes ~15 s (10 particles)
+# to ~3 min (100 particles) on the Intel log.
+# Run: make run E=E06   or   python -m pfexp.run experiments/E06_gmapping_resampling.yaml
+title: Resampling threshold and particle count in gmapping (real data)
+question: >
+  On a real laser log, how do gmapping's resampling threshold and number of particles change the
+  effective sample size and how often it resamples?
+hypothesis: >
+  A higher threshold resamples more often and keeps the ESS higher on average; gmapping's improved
+  proposal keeps the ESS high even with few particles, so it rarely needs to resample at the default 0.5.
+filter: gmapping
+world: {dataset: intel}    # intel or aces
+fixed: {}
+vary:
+  n_particles: [10, 30, 100]
+  resample_threshold: [0.25, 0.5, 0.75, 1.0]    # x axis of the figures
+seeds: 3
+quick:
+  seeds: 1
+  world: {dataset: aces}
+  vary: {n_particles: [10], resample_threshold: [0.5, 1.0]}
+report:
+  metrics: [ess_mean, ess_min, resample_rate, runtime_per_step_ms]
+  traces: []
