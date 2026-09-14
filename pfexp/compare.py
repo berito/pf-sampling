@@ -1,9 +1,11 @@
-"""Compare stored results across experiments, without running anything.
+"""Compare stored results across experiments, or across numbered result sets of one experiment, without running
+anything.
 
     python -m pfexp.compare results/E01_resampling_scheme_localization results/E05_resample_move --metrics position_rmse ess_mean
-    python -m pfexp.compare results/E01_resampling_scheme_localization results/E05_resample_move --name resample_move_vs_baseline
+    python -m pfexp.compare results/E04_particle_count/001 results/E04_particle_count/002 --name stratified_vs_systematic
 
-Reads each experiment's runs.csv and writes results/comparisons/<name>/ with a table (csv, md, tex) and a figure.
+An experiment folder stands for its current number. Reads each runs.csv and writes results/comparisons/<name>/ with
+a table (csv, md, tex) and a figure.
 """
 import argparse
 from pathlib import Path
@@ -17,14 +19,26 @@ from pfexp import style
 from pfexp.analysis import Z95, save
 
 
+def result_set(folder):
+    """A numbered result set folder, and its label such as 'E04_particle_count 002'."""
+    folder = Path(folder)
+    if not folder.name.isdigit():
+        current = R.current_dir(folder)
+        if current is None:
+            raise FileNotFoundError(f"{folder} has no results yet, run the experiment first")
+        folder = current
+    return folder, f"{folder.parent.name} {folder.name}"
+
+
 def load(folders):
     frames = []
     for folder in folders:
-        table = Path(folder) / "runs.csv"
+        folder, name = result_set(folder)
+        table = folder / "runs.csv"
         if not table.exists():
             raise FileNotFoundError(f"{table} not found, run the experiment (or pfexp.analysis) first")
         frame = pd.read_csv(table)
-        frame.insert(0, "experiment", Path(folder).name)
+        frame.insert(0, "experiment", name)
         frames.append(frame)
     return pd.concat(frames, ignore_index=True)
 
@@ -72,7 +86,8 @@ def main(argv=None):
     ap.add_argument("--metrics", nargs="+", default=["position_rmse", "ess_mean", "runtime_per_step_ms"])
     ap.add_argument("--name", default=None, help="output folder name (default: joined experiment names)")
     args = ap.parse_args(argv)
-    compare(args.folders, args.metrics, args.name or "_vs_".join(Path(f).name for f in args.folders))
+    default_name = "_vs_".join(result_set(f)[1].replace(" ", "_") for f in args.folders)
+    compare(args.folders, args.metrics, args.name or default_name)
 
 
 if __name__ == "__main__":

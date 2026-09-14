@@ -57,20 +57,20 @@ def test_milestone_checker_follows_an_experiment_from_missing_to_done(results):
     experiment = E.load(config)
 
     status = check.experiment_check(config)
-    assert status.status == check.TODO and "0 of 8 runs" in status.detail and "make run E=T03_small" in status.fix
+    assert status.status == check.TODO and "0 of 8 runs" in status.detail and "make start E=T03_small" in status.fix
 
     runner.run_experiment(experiment, jobs=2, report=False)
     status = check.experiment_check(config)
     assert status.status == check.TODO and "not up to date" in status.detail
 
-    analysis.build(experiment, R.experiment_dir(experiment.id))
+    analysis.build(experiment, R.experiment_dir(experiment.id) / "001")
     assert check.experiment_check(config).status == check.OK
 
-    first = next((R.experiment_dir(experiment.id) / "runs").glob("*.json"))
+    first = next((R.experiment_dir(experiment.id) / "001" / "runs").glob("*.json"))
     record = json.loads(first.read_text())
     first.write_text(json.dumps({**record, "code": "older"}))
     status = check.experiment_check(config)
-    assert status.status == check.TODO and "older code" in status.detail and "--rerun" in status.fix
+    assert status.status == check.TODO and "older code" in status.detail and "make redo" in status.fix
 
 
 

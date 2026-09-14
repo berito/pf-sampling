@@ -1,12 +1,13 @@
 """Turn stored runs into report-ready output for one experiment.
 
-    results/<experiment>/runs.csv                 every run with its settings and metrics
-    results/<experiment>/tables/summary.{csv,md,tex}   mean ± std per variant
-    results/<experiment>/figures/*.{pdf,png}      metrics per variant and values over time
-    results/<experiment>/summary.md               question, setup, table, findings, figures
-    results/<experiment>/summary.json             the same, read by show_results.py
+    results/<experiment>/<number>/runs.csv                 every run with its settings and metrics
+    results/<experiment>/<number>/tables/summary.{csv,md,tex}   mean ± std per variant
+    results/<experiment>/<number>/figures/*.{pdf,png}      metrics per variant and values over time
+    results/<experiment>/<number>/summary.md               question, setup, table, findings, figures
+    results/<experiment>/<number>/summary.json             the same, read by show_results.py
 
-Rebuild without running anything:  python -m pfexp.analysis experiments/E01_resampling_scheme_localization.yaml [--quick]
+Rebuild without running anything (the current number, or --number N):
+    python -m pfexp.analysis experiments/E01_resampling_scheme_localization.yaml [--number 2] [--quick]
 """
 import argparse
 import json
@@ -68,11 +69,17 @@ def summary_stats(df, order, metrics):
     return stats
 
 
-def formatted_table(stats, metrics):
-    header = ["Variant", "Seeds"] + [style.metric_label(m) for m in metrics if f"{m}_mean" in stats]
+def formatted_table(stats, metrics, experiment):
+    """Header and rows of the summary table. With several varied settings, each gets its own column."""
+    split = len(experiment.vary) > 1
+    settings = list(experiment.vary)
+    variants = {variant_label(experiment, v): v for v in variants_in_order(experiment)}
+    header = ([style.setting_label(k) for k in settings] if split else ["Variant"]) + ["Seeds"]
+    header += [style.metric_label(m) for m in metrics if f"{m}_mean" in stats]
     rows = []
     for variant, row in stats.iterrows():
-        cells = [variant, str(int(row["seeds"]))]
+        names = [style.technique_name(variants[variant][k]) for k in settings] if split else [variant]
+        cells = names + [str(int(row["seeds"]))]
         for metric in metrics:
             if f"{metric}_mean" in stats:
                 cells.append(f"{row[f'{metric}_mean']:.3g} ± {row[f'{metric}_std']:.2g}")
@@ -87,13 +94,27 @@ def write_tables(folder, stats, header, rows):
     table = pd.DataFrame(rows, columns=header)
     (tables / "summary.md").write_text(table.to_markdown(index=False) + "\n")
     latex = table.to_latex(index=False, escape=True).replace("±", r"$\pm$")
-    (tables / "summary.tex").write_text(latex)
+    lines = latex.splitlines()
+    header_line = next(i for i, line in enumerate(lines) if line.strip() == r"\toprule") + 1
+    lines[header_line] = " & ".join(_wrapped_header(h) for h in header) + r" \\"
+    (tables / "summary.tex").write_text("\n".join(lines) + "\n")
     return table
+
+
+def _wrapped_header(text, width=14):
+    """A LaTeX table header cell broken into lines of about `width` characters, so wide tables need less scaling."""
+    words, lines = text.replace("%", r"\%").replace("_", r"\_").split(), [""]
+    for word in words:
+        if lines[-1] and len(lines[-1]) + 1 + len(word) > width:
+            lines.append(word)
+        else:
+            lines[-1] = f"{lines[-1]} {word}".strip()
+    return lines[0] if len(lines) == 1 else r"\shortstack[l]{" + r"\\".join(lines) + "}"
 
 
 # --- findings -------------------------------------------------------------------------------
 
-def findings(stats, metrics):
+def findings(stats, metrics, prefix=""):
     """Plain sentences about which variant is best on each metric, and whether the gap is beyond noise."""
     sentences = []
     if len(stats) < 2:
@@ -123,9 +144,33 @@ def findings(stats, metrics):
         else:
             verdict = "clearly beyond the seed-to-seed spread" if separated else "within the seed-to-seed spread"
         sentences.append(
-            f"{style.METRICS.get(metric, (metric,))[0]}: {what} is {best} ({mean[best]:.3g}), "
+            f"{prefix}{style.METRICS.get(metric, (metric,))[0]}: {what} is {best} ({mean[best]:.3g}), "
             f"vs {worst} ({mean[worst]:.3g}), a {change:.0f}% difference, {verdict} (95% intervals)."
         )
+    return sentences
+
+
+def grouped_findings(experiment, df, metrics):
+    """Findings that only compare like with like.
+
+    With one varied setting, its variants are compared. With more, the first setting that is not the numeric
+    sweep is compared within each combination of the others (e.g. resamplers at each particle count).
+    """
+    if len(experiment.vary) == 1:
+        order = [variant_label(experiment, v) for v in variants_in_order(experiment)]
+        order = [v for v in order if v in set(df["variant"])]
+        return findings(summary_stats(df, order, metrics), metrics)
+    sweep = sweep_key(experiment)
+    compared = next((k for k in experiment.vary if k != sweep), next(iter(experiment.vary)))
+    others = [k for k in experiment.vary if k != compared]
+    sentences = []
+    for values, group in df.groupby(others, sort=False):
+        values = values if isinstance(values, tuple) else (values,)
+        where = ", ".join(f"{k.replace('_', ' ')} = {style.technique_name(v)}" for k, v in zip(others, values))
+        labels = {E.label(v): style.technique_name(v) for v in experiment.vary[compared]}
+        group = group.assign(variant=group[compared].map(labels))
+        order = [labels[E.label(v)] for v in experiment.vary[compared] if labels[E.label(v)] in set(group["variant"])]
+        sentences += findings(summary_stats(group, order, metrics), metrics, prefix=f"At {where}: ")
     return sentences
 
 
@@ -176,6 +221,8 @@ def metrics_figure(experiment, df, stats, order, metrics, figures):
         else:
             _metric_per_variant(ax, experiment, df, stats, order, metric)
         ax.set_title(style.metric_label(metric), loc="left")
+        if metric in style.LOG_SCALE:
+            ax.set_yscale("log")
     for ax in axes.flat[len(metrics):]:
         ax.set_visible(False)
     fig.suptitle(experiment.title, x=0.01, ha="left", fontsize=11, color=style.INK)
@@ -193,7 +240,8 @@ def _metric_per_variant(ax, experiment, df, stats, order, metric):
                    linewidths=0)
         mean, std = stats.loc[variant, f"{metric}_mean"], stats.loc[variant, f"{metric}_std"]
         half = Z95 * std / np.sqrt(max(1, len(values)))
-        ax.errorbar(i, mean, yerr=half, fmt="o", color=colour, markersize=6, elinewidth=2, capsize=0,
+        below = min(half, 0.9 * mean) if metric in style.LOG_SCALE else half  # a log axis has no zero
+        ax.errorbar(i, mean, yerr=[[below], [half]], fmt="o", color=colour, markersize=6, elinewidth=2, capsize=0,
                     markeredgecolor="#fcfcfb", markeredgewidth=1)
     ax.set_xticks(range(len(order)), order, rotation=25 if max(map(len, order)) > 10 else 0, ha="right"
                   if max(map(len, order)) > 10 else "center")
@@ -219,7 +267,10 @@ def _metric_vs_sweep(ax, experiment, df, metric, sweep):
         if label and others and all(isinstance(x, (int, float)) for x in experiment.vary[others[0]]):
             label = f"{others[0].replace('_', ' ')} = {name}"  # a bare number needs its setting's name
         ax.plot(x, mean, color=colour, marker="o", markersize=4, label=label)
-        ax.fill_between(x, mean - half, mean + half, color=colour, alpha=0.15, linewidth=0)
+        low = mean - half
+        if metric in style.LOG_SCALE:  # a band below zero cannot be drawn on a log axis
+            low = np.maximum(low, mean / 10)
+        ax.fill_between(x, low, mean + half, color=colour, alpha=0.15, linewidth=0)
         if label:
             ends.append((label, x[-1], mean[-1]))
     values = np.array(experiment.vary[sweep], dtype=float)
@@ -234,8 +285,7 @@ def _metric_vs_sweep(ax, experiment, df, metric, sweep):
 def traces_figure(experiment, folder, df, order, trace, figures):
     colours = style.colours([next(iter(v.values())) if len(v) == 1 else json.dumps(v) for v in
                              variants_in_order(experiment)])
-    fig, ax = plt.subplots(figsize=(6.4, 3.2))
-    ends = []
+    fig, ax = plt.subplots(figsize=(8.0, 3.4))
     for variant, colour in zip(order, colours):
         series = [R.load_traces(folder, run_id)[trace].to_numpy()
                   for run_id in df.loc[df["variant"] == variant, "run_id"]]
@@ -248,21 +298,21 @@ def traces_figure(experiment, folder, df, order, trace, figures):
         steps = np.arange(length)
         ax.plot(steps, mean, color=colour, label=variant)
         ax.fill_between(steps, mean - half, mean + half, color=colour, alpha=0.15, linewidth=0)
-        ends.append((variant, steps[-1], mean[-1]))
     ax.set_xlabel("Time step   (line: mean over seeds, shaded: 95% interval)")
     ax.set_title(style.trace_label(trace), loc="left")
-    ax.legend(loc="best")
-    end_labels(ax, ends)
+    ax.legend(loc="center left", bbox_to_anchor=(1.01, 0.5), frameon=False)
     fig.tight_layout()
     return save(fig, figures, f"trace_{trace}")
 
 
 # --- summary --------------------------------------------------------------------------------
 
-def setup_lines(experiment, n_runs):
+def setup_lines(experiment, n_runs, info=None):
     fixed = ", ".join(f"{k} = {E.label(v)}" for k, v in experiment.fixed.items()) or "defaults"
     varied = "; ".join(f"{k}: {', '.join(E.label(x) for x in v)}" for k, v in experiment.vary.items())
-    return [
+    info = info or {}
+    number = [f"Result set {info['number']}" + (f": {info['note']}" if info.get("note") else "")] if info else []
+    return number + [
         f"Filter: {experiment.filter}" + (f", world settings: {experiment.world}" if experiment.world else ""),
         f"Fixed: {fixed}",
         f"Varied: {varied}",
@@ -272,8 +322,13 @@ def setup_lines(experiment, n_runs):
 
 
 def build(experiment, folder):
-    """Build tables, figures and summaries from whatever runs are stored."""
+    """Build tables, figures and summaries from whatever runs are stored in one numbered result set.
+
+    The set's own parameters are used, so an earlier number is described as it was run."""
     style.apply()
+    if (folder / "parameters.yaml").exists():
+        experiment = R.experiment_for(folder, experiment)
+    info = R.read_info(folder)
     records = R.load_runs(folder)
     df, outdated = runs_table(experiment, records)
     if df.empty:
@@ -287,7 +342,7 @@ def build(experiment, folder):
     metrics = [m for m in experiment.metrics if m in df]
 
     stats = summary_stats(df, order, metrics)
-    header, rows = formatted_table(stats, metrics)
+    header, rows = formatted_table(stats, metrics, experiment)
     write_tables(folder, stats, header, rows)
     figures_dir = folder / "figures"
     figures = [metrics_figure(experiment, df, stats, order, metrics, figures_dir)]
@@ -302,14 +357,15 @@ def build(experiment, folder):
     if len(df) < expected:
         notes.append(f"Incomplete: {len(df)} of {expected} runs stored.")
     if stale:
-        notes.append(f"{stale} runs were made with an older version of the code (rerun with --rerun to refresh).")
+        notes.append(f"{stale} of {len(df)} runs were made with a different version of the code than the current one.")
     if outdated:
-        notes.append(f"{outdated} stored runs belong to an earlier version of this config and are not shown.")
+        notes.append(f"{outdated} stored runs have settings outside this result set's parameters and are not shown.")
 
     summary = {
         "id": experiment.id, "title": experiment.title, "question": experiment.question.strip(),
-        "hypothesis": experiment.hypothesis.strip(), "setup": setup_lines(experiment, len(df)),
-        "table": {"header": header, "rows": rows}, "findings": findings(stats, metrics),
+        "number": info.get("number", folder.name), "note": info.get("note", ""),
+        "hypothesis": experiment.hypothesis.strip(), "setup": setup_lines(experiment, len(df), info),
+        "table": {"header": header, "rows": rows}, "findings": grouped_findings(experiment, df, metrics),
         "figures": figures, "notes": notes, "runs": len(df), "expected_runs": expected,
         "hosts": sorted(df["host"].unique().tolist()),
     }
@@ -320,7 +376,7 @@ def build(experiment, folder):
 
 
 def summary_markdown(summary):
-    lines = [f"# {summary['title']}", "", f"**Question.** {summary['question']}", ""]
+    lines = [f"# {summary['title']} ({summary['number']})", "", f"**Question.** {summary['question']}", ""]
     if summary["hypothesis"]:
         lines += [f"**Hypothesis.** {summary['hypothesis']}", ""]
     lines += ["## Setup", ""] + [f"- {line}" for line in summary["setup"]] + [""]
@@ -338,10 +394,16 @@ def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("configs", nargs="+", type=Path)
     ap.add_argument("--quick", action="store_true")
+    ap.add_argument("--number", type=int, help="the numbered result set to rebuild (default: the current one)")
     args = ap.parse_args(argv)
     for config in args.configs:
         experiment = E.load(config, quick=args.quick)
-        build(experiment, R.experiment_dir(experiment.id, args.quick))
+        parent = R.experiment_dir(experiment.id, args.quick)
+        number = args.number if args.number is not None else R.current_number(parent)
+        if number is None or number not in R.numbers(parent):
+            print(f"{experiment.id}: no result set to analyse yet")
+            continue
+        build(experiment, R.number_dir(parent, number))
 
 
 if __name__ == "__main__":

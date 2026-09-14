@@ -1,15 +1,80 @@
 \section{Method}\label{sec:method}
 
 \subsection{Filters and worlds}
-% - Localization on Elfring's simulated world; FastSLAM on the PythonRobotics scenario.
-% - Every technique sees the same world for the same seed.
+
+\paragraph{Localization.} The localization problem is the running example of the particle filter tutorial by Elfring
+et al.\ \cite{elfring2021particle}, simulated with its own classes. The world is a $10 \times 10$\,m square with four
+landmarks at $(2, 2)$, $(2, 8)$, $(9, 2)$ and $(8, 9)$\,m; positions wrap around at its edges. The robot starts at
+$(7.5, 2)$\,m facing along the $y$ axis and makes 30 steps, each commanding a forward motion of 0.25\,m and a turn
+of 0.02\,rad. Its true motion has noise with standard deviations 0.005\,m and 0.002\,rad, and after each step it
+measures the range and bearing to all four landmarks with noise of 0.2\,m and 0.05\,rad. The filter assumes larger
+noise, 0.1\,m and 0.2\,rad in motion and 0.4\,m and 0.3\,rad in measurement, the settings of the tutorial. It does
+not know the start: the particles are drawn uniformly over the world and all headings, so the filter solves global
+localization during the first steps.
+
+\paragraph{SLAM.} The SLAM problem is the FastSLAM scenario of PythonRobotics \cite{sakai2018pythonrobotics},
+simulated with its own functions. The robot waits for 3\,s and then drives at 1\,m/s with a yaw rate of 0.1\,rad/s for 50\,s in total, 500 steps of 0.1\,s,
+among eight landmarks. It observes the range and bearing of every landmark within 20\,m, with noise of 0.3\,m and
+$2^\circ$, and the filter receives the control with noise of 0.5\,m/s and $10^\circ$/s plus a constant yaw-rate
+offset of 0.01\,rad/s. The filter assumes noise of 3\,m and $10^\circ$ for observations and 1\,m/s and $20^\circ$/s for
+controls, the settings of the upstream script. All particles start at the true initial pose, and the landmark
+identities are known. Each particle carries one extended Kalman filter per landmark it has observed.
+
+\paragraph{Seeds.} Every configuration runs with 20 seeds. A seed fixes both the simulated world (the true path and
+all measurements) and the random numbers of the filter, and every variant of an experiment uses the same seeds, so
+differences between variants within a seed come from the sampling choice alone.
 
 \subsection{Implementation}
-% - Built on existing open-source filters; sampling steps as swappable plug-ins.
-% - Borrowed code checked against the upstream functions; bugs fixed (details in Appendix A).
+
+The filters are built on two open-source implementations: the Python particle filter tutorial of Elfring et al.\
+\cite{elfring2021particle} for localization and the four resampling schemes, and the FastSLAM 1.0 and 2.0 scripts of
+PythonRobotics \cite{sakai2018pythonrobotics}. Both are MIT-licensed and pinned to fixed commits (\cref{app:upstream}). The four resampling algorithms
+and the three rules for when to resample are called unchanged from the tutorial. The motion and measurement models,
+the proposals and the FastSLAM updates are copied, vectorized over particles and changed to compute weights in log
+space.
+
+Each filter runs the same loop at every step: the proposal draws new poses and returns log weights, the weights are
+normalized, the effective sample size \eqref{eq:ess} is recorded, the rule decides whether to resample, and if so the
+resampling scheme selects the particles. Proposals, resampling schemes and rules are interchangeable components
+selected by name, so an experiment is a configuration file that lists the settings to keep fixed and the settings to
+vary. Every run is stored with its settings, metrics, per-step values and a fingerprint of the code that produced it.
+
+Before any experiment, each copied function was compared with the original. With the corrections switched off, the
+copies reproduce the original results: the localization likelihood and motion model exactly, one full extended Kalman
+particle filter update, and the FastSLAM prediction and observation updates over several steps. The comparison also
+exposed errors in the original code, among them a FastSLAM 2.0 update that never samples from its proposal and an
+extended Kalman particle filter whose weights break at the world's edges. The experiments use the corrected versions,
+described in \cref{app:upstream}.
+
+The experiments ran in a container with Python 3.11 and NumPy 2.2, with 16 runs in parallel on a 52-core computer.
+Runtimes are therefore comparable within an experiment but only indicative in absolute terms.
 
 \subsection{Metrics}
-% - Position RMSE, ATE, map error, effective sample size, distinct particles after resampling, NEES, runtime.
-% - Statistics over seeds: mean, standard deviation, 95% intervals.
 
-\todo{Method.}
+Let $\hat{\x}_t$ be the weighted mean of the particles after each step (the heading as a circular mean) and $\x_t$ the
+true pose, over $T$ steps.
+\begin{itemize}
+  \item \emph{Position RMSE}: $\sqrt{\frac{1}{T} \sum_t \lVert \hat{p}_t - p_t \rVert^2}$, with $p$ the position part of
+        the pose.
+  \item \emph{ATE} (absolute trajectory error): the same after the best rigid alignment (rotation and translation)
+        of the estimated path onto the true one. In SLAM the map frame is only anchored at the start, so a rotation
+        of the whole solution is not an error in its shape; the ATE removes it. In localization it is close to the
+        RMSE.
+  \item \emph{Map error (aligned)}: the mean distance between the estimated and true landmark positions at the end of
+        a SLAM run, after the best rigid alignment of the estimated map.
+  \item \emph{Mean ESS\,/\,N}: the effective sample size before resampling, divided by $N$ and averaged over steps.
+  \item \emph{Distinct particles after resampling\,/\,N}: the number of different particles that survive a
+        resampling step, divided by $N$ and averaged over the steps that resample. It measures impoverishment.
+  \item \emph{Resampling rate}: the fraction of steps that resample.
+  \item \emph{Median NEES}: the normalized estimation error squared, $e_t^\top S_t^{-1} e_t$ with $e_t$ the pose error
+        and $S_t$ the weighted covariance of the particles, whose median over the steps of a run is reported. For a
+        filter whose spread matches its error the NEES is about 3, the pose dimension; much larger values mean the
+        particles are overconfident. The median is used because the first steps after a uniform start give values
+        of $10^8$ and more that would dominate a mean.
+  \item \emph{Runtime per step}: wall-clock time of the filter step, without simulation and logging.
+\end{itemize}
+
+Each table reports the mean and standard deviation over the 20 seeds. A difference between two variants is called
+clear when their 95\% confidence intervals for the mean, $\bar{m} \pm 1.96\, s / \sqrt{20}$, do not overlap, and within
+the seed-to-seed spread otherwise. This test is conservative, and it is applied only between variants with the same
+value of the other varied setting, for example between resampling schemes at the same number of particles.

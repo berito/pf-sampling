@@ -31,6 +31,15 @@ NAMES = {
     "none": "No move", "resample_move_mh": "Resample-move (MH)",
 }
 
+# Column headers for the settings an experiment varies.
+SETTINGS = {
+    "resampler": "Resampler", "trigger": "When to resample", "proposal": "Proposal", "move": "Move",
+    "n_particles": "Particles", "resample_threshold": "Resampling threshold",
+}
+
+# Metrics whose values span orders of magnitude, plotted on a logarithmic axis.
+LOG_SCALE = {"nees_mean", "nees_median"}
+
 # metric: (display name, unit, which direction is better: "lower", "higher", or a target value)
 METRICS = {
     "position_rmse": ("Position RMSE", "m", "lower"),
@@ -41,7 +50,7 @@ METRICS = {
     "map_error_aligned": ("Map error (aligned)", "m", "lower"),
     "ess_mean": ("Mean ESS / N", "", "higher"),
     "ess_min": ("Min ESS / N", "", "higher"),
-    "unique_after_resampling": ("Distinct particles after resampling / N", "", "higher"),
+    "unique_after_resampling": ("Distinct after resampling / N", "", "higher"),
     "resample_rate": ("Resampling rate", "", None),
     "resample_count": ("Resampling steps", "", None),
     "collapses": ("Weight collapses", "", "lower"),
@@ -58,6 +67,10 @@ TRACES = {
     "unique_after": ("Distinct particles after resampling", "particles"),
     "max_weight": ("Largest weight", ""),
 }
+
+
+def setting_label(name):
+    return SETTINGS.get(name, name.replace("_", " ").capitalize())
 
 
 def metric_label(name):

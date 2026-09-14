@@ -1,0 +1,46 @@
+{
+ "run_id": "313b54070fe7",
+ "experiment": "E03_proposal_slam",
+ "filter": "fastslam",
+ "seed": 19,
+ "world": {},
+ "settings": {
+  "resampler": "systematic",
+  "proposal": "fastslam1",
+  "n_particles": 25
+ },
+ "variant": {
+  "proposal": "fastslam1",
+  "n_particles": 25
+ },
+ "metrics": {
+  "ate": 0.17620447720690763,
+  "resample_rate": 0.29,
+  "collapses": 0,
+  "unique_after_resampling": 0.6430344827586206,
+  "max_weight_mean": 0.06085037430517633,
+  "ess_mean": 0.7528180388382271,
+  "ess_min": 0.47408350670467103,
+  "map_error": 0.7957193768517894,
+  "map_error_aligned": 0.08968850527123032,
+  "landmarks_mapped": 8,
+  "nees_mean": 28.272224025765084,
+  "nees_median": 15.653645333910308,
+  "position_rmse": 0.664232733489186,
+  "heading_rmse": 0.05162125442148037,
+  "final_position_error": 0.5122904707633346,
+  "runtime_total_s": 0.9275432330032345,
+  "runtime_per_step_ms": 1.855086466006469
+ },
+ "duration_s": 1.044,
+ "host": "aiserver",
+ "date": "2026-09-14T08:34:06+00:00",
+ "python": "3.11.16",
+ "numpy": "2.2.6",
+ "code": "d7328d3e3c3f",
+ "vendor_commits": {
+  "particle_filter_tutorial": "e6014b7",
+  "pythonrobotics": "1fe4fb9",
+  "openslam_gmapping": "79ef0b0"
+ }
+}

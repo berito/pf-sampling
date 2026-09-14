@@ -83,7 +83,7 @@ def test_numeric_sweep_with_more_variants_than_colours(results):
     experiment = E.load(write(results, "T02_sweep", SWEEP), quick=True)  # 12 variants, 8 colours
     assert analysis.sweep_key(experiment) == "n_particles"
     runner.run_experiment(experiment, quick=True, jobs=2)
-    summary = json.loads((R.QUICK_RESULTS / "T02_sweep" / "summary.json").read_text())
+    summary = json.loads((R.QUICK_RESULTS / "T02_sweep" / "001" / "summary.json").read_text())
     assert summary["runs"] == 12 and summary["notes"] == []
 
 

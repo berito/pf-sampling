@@ -24,14 +24,14 @@ If two numeric settings are varied, the last one goes on the x axis of the figur
 import hashlib
 import itertools
 import json
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from pathlib import Path
 
 import yaml
 
 FILTERS = ("mcl", "fastslam", "gmapping")
 TECHNIQUE_KINDS = ("proposal", "resampler", "trigger", "move")
-DEFAULT_METRICS = ["position_rmse", "ate", "ess_mean", "unique_after_resampling", "nees_mean",
+DEFAULT_METRICS = ["position_rmse", "ate", "ess_mean", "unique_after_resampling", "nees_median",
                    "runtime_per_step_ms"]
 DEFAULT_TRACES = ["ess", "position_error"]
 
@@ -92,6 +92,16 @@ class Experiment:
             from pfexp.filters import gmapping
             found += gmapping.problems(self.world)
         return found
+
+    def parameters(self):
+        """The settings that decide what is run. Seeds are left out: more seeds refine the same experiment."""
+        return {"filter": self.filter, "world": self.world, "fixed": self.fixed, "vary": self.vary}
+
+    def with_parameters(self, parameters, seeds=None):
+        """The same experiment (title, question, report) with stored parameters, e.g. those of an earlier number."""
+        return replace(self, filter=parameters["filter"], world=dict(parameters["world"]),
+                       fixed=dict(parameters["fixed"]), vary={k: list(v) for k, v in parameters["vary"].items()},
+                       seeds=self.seeds if seeds is None else list(seeds))
 
     @property
     def metrics(self):

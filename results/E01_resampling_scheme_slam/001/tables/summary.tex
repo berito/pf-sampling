@@ -1,0 +1,14 @@
+\begin{tabular}{lllllllll}
+\toprule
+Resampler & Particles & Seeds & \shortstack[l]{Position RMSE\\(m)} & \shortstack[l]{ATE (aligned)\\(m)} & \shortstack[l]{Map error\\(aligned) (m)} & \shortstack[l]{Distinct after\\resampling / N} & Mean ESS / N & \shortstack[l]{Runtime per\\step (ms)} \\
+\midrule
+Multinomial & 10 & 20 & 0.96 $\pm$ 0.55 & 0.324 $\pm$ 0.064 & 0.139 $\pm$ 0.04 & 0.624 $\pm$ 0.0043 & 0.893 $\pm$ 0.0051 & 1.5 $\pm$ 0.012 \\
+Multinomial & 50 & 20 & 0.975 $\pm$ 0.47 & 0.223 $\pm$ 0.037 & 0.0965 $\pm$ 0.024 & 0.61 $\pm$ 0.002 & 0.893 $\pm$ 0.0025 & 2.71 $\pm$ 0.01 \\
+Residual & 10 & 20 & 1.02 $\pm$ 0.84 & 0.277 $\pm$ 0.048 & 0.13 $\pm$ 0.037 & 0.785 $\pm$ 0.0024 & 0.892 $\pm$ 0.0041 & 1.57 $\pm$ 0.018 \\
+Residual & 50 & 20 & 0.759 $\pm$ 0.41 & 0.209 $\pm$ 0.055 & 0.0832 $\pm$ 0.016 & 0.778 $\pm$ 0.0025 & 0.892 $\pm$ 0.0028 & 2.89 $\pm$ 0.02 \\
+Stratified & 10 & 20 & 1.06 $\pm$ 0.71 & 0.247 $\pm$ 0.058 & 0.114 $\pm$ 0.037 & 0.801 $\pm$ 0.0042 & 0.893 $\pm$ 0.0043 & 1.51 $\pm$ 0.0073 \\
+Stratified & 50 & 20 & 0.58 $\pm$ 0.31 & 0.205 $\pm$ 0.039 & 0.069 $\pm$ 0.02 & 0.787 $\pm$ 0.0016 & 0.892 $\pm$ 0.0021 & 2.8 $\pm$ 0.0088 \\
+Systematic & 10 & 20 & 0.973 $\pm$ 0.61 & 0.233 $\pm$ 0.044 & 0.105 $\pm$ 0.032 & 0.86 $\pm$ 0.0038 & 0.895 $\pm$ 0.0037 & 1.46 $\pm$ 0.023 \\
+Systematic & 50 & 20 & 0.879 $\pm$ 0.54 & 0.242 $\pm$ 0.1 & 0.0754 $\pm$ 0.016 & 0.858 $\pm$ 0.0019 & 0.892 $\pm$ 0.0024 & 2.35 $\pm$ 0.17 \\
+\bottomrule
+\end{tabular}

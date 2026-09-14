@@ -3,10 +3,14 @@
 Particle-filter experiments for a PGM course project. See README.md for what the project is.
 
 ## Before starting work
-- If `docs/project/TASKS.md` exists, read it first: milestones, task status, and a log of decisions.
+- If `docs/project/TASKS.md` exists, read it first: phases, task status, the Later list, and a log of decisions.
   Tick tasks and add a log line as you finish work. Stop at ⏸ checkpoints for the user's review.
 - Also add one plain, single line per major action to `docs/project/ACTIONS.md` as you go (what you did, not how).
 - Show a plan before starting larger changes, and wait for approval.
+- **Work in phases.** Each phase in TASKS.md has a fixed scope and ends with a complete result: experiments run and
+  reviewed, and a report that could be handed in as it is. Finish the current phase before starting the next. New
+  ideas or gaps found along the way go to the "Later" list, never into the current phase. Phase 1 (core study +
+  report) comes first; later phases only if time allows.
 
 ## Rules
 - **Stages:** development (now): `.claude/` and `docs/` are tracked but separate from the product. Release (after the
@@ -28,6 +32,10 @@ Particle-filter experiments for a PGM course project. See README.md for what the
   `docker exec pf-sampling-dev <cmd>`). Never install packages on the host. Add light libraries to
   `.devcontainer/requirements.txt` (rebuilds in seconds); keep heavy, stable ones in `requirements-base.txt`;
   add system tools as a new RUN line after the base apt layer. Keep the Dockerfile ordered rare → frequent.
+- **Never use other people's work.** On any computer, never use, run, start, stop, change or remove Docker images,
+  containers, volumes, files or folders that this project did not create. Only `pf-sampling:dev` and containers named
+  `pf-sampling-*` are ours. If our image can't be built or something is missing, stop and ask the user; never
+  borrow someone else's image or container as a workaround.
 - **Don't commit.** The user makes all commits.
 - **Keep folders clean:** build artifacts only in `.build/`, datasets in `datasets/`, outputs in
   `results/`. Nothing generated in the project root. gmapping and the vendor demos write files into
@@ -56,7 +64,7 @@ inside the container. Human guides: experiments/README.md, report/README.md, pfe
 
 Private, for Claude only (run inside the container; not part of the shared project):
 ```bash
-python .claude/tools/check_milestones.py [M4] [--fast]   # each milestone in TASKS.md: done / missing / next command
+python .claude/tools/check_milestones.py [P1|all] [--fast]   # the current phase in TASKS.md: done / missing / next command
 python -m pytest -q .claude/tools                         # its tests, incl. "shared files don't mention private material"
 ```
 Keep the checker in step with TASKS.md and the experiment configs.

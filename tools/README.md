@@ -6,6 +6,7 @@ tools/
   fetch_datasets.py        download the datasets and verify checksums (--check: verify only)
   run_vendor_baseline.py   rerun the upstream demos unchanged, into results/baseline/
   build_gmapping.sh        copy vendor gmapping to .build/, patch, build
+  background.sh            run experiments in the background (make start / running / log / stop)
   patches/                 fixes applied to the .build/ copy of gmapping (never to vendor/)
 ```
 
@@ -13,7 +14,7 @@ Everything runs inside the devcontainer, so nothing is installed on the host.
 Open the **project folder** in VS Code and choose *Reopen in Container*, or without VS Code:
 
 ```bash
-docker run -d --name pf-sampling-dev --user $(id -u):$(id -g) -e PFEXP_HOST=$(hostname) \
+docker run -d --init --restart unless-stopped --name pf-sampling-dev --user $(id -u):$(id -g) -e PFEXP_HOST=$(hostname) \
   -v "$PWD":/workspaces/pf-sampling \
   -w /workspaces/pf-sampling pf-sampling:dev sleep infinity
 docker exec pf-sampling-dev <command>

@@ -38,16 +38,25 @@ Each section starts with comments listing what it should cover. Every unfinished
 \experimentfigure{E02_when_to_resample}{trace_ess}{Effective sample size over time.}
 ```
 
-The first argument is the config name in `experiments/`. The figure name is a file in
-`results/<experiment>/figures/` without its extension: `metrics`, or `trace_<name>` for each trace listed in
-the config. Until the experiment has run, a red placeholder appears and `make report` lists it.
+The first argument is the config name in `experiments/`. The figure name is a file in the result set's
+`figures/` folder without its extension: `metrics`, or `trace_<name>` for each trace listed in the config. Until
+the experiment has run, a red placeholder appears and `make report` lists it.
+
+The report shows each experiment's current result set (`results/<experiment>/current.txt`; choose it with
+`make use E=E02 N=1`). To show a particular number, for example two sets side by side after a parameter change,
+give it first:
+
+```latex
+\experimenttable[001]{E04_particle_count}{How many particles, systematic resampling.}
+\experimenttable[002]{E04_particle_count}{How many particles, stratified resampling.}
+```
 
 The table shows every metric in the config's `report.metrics`. If a table is too wide for the page, list
 fewer metrics there and run `make analyse E=<experiment>`. Nothing needs to rerun.
 
 ## Writing an experiment's subsection
 
-1. `make run E=E02`, then open `results/E02_when_to_resample/summary.md`. It has the question, the setup, the
+1. `make run E=E02`, then open `results/E02_when_to_resample/001/summary.md`. It has the question, the setup, the
    table, and findings computed with 95% intervals (for example "the highest is ..., clearly beyond the
    seed-to-seed spread").
 2. In `sections/05_experiments.tex`, replace the `\todo{...}` with: the question, the setup (what was fixed,

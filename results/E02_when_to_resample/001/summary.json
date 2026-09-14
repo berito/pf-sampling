@@ -1,0 +1,117 @@
+{
+ "id": "E02_when_to_resample",
+ "title": "When should the filter resample?",
+ "question": "Is it better to resample every step, never, or only when the particles degenerate (measured by the effective sample size (ESS) or by the largest weight), and how much does the threshold matter?",
+ "number": "001",
+ "note": "",
+ "hypothesis": "Never resampling collapses onto a few particles and loses track. Resampling every step keeps track but wastes diversity. An ESS threshold around 0.5 gives the lowest error with the fewest resampling steps; the max-weight rule behaves similarly but is more sensitive to its threshold.",
+ "setup": [
+  "Result set 001",
+  "Filter: mcl",
+  "Fixed: n_particles = 100, proposal = motion_model, resampler = systematic",
+  "Varied: trigger: every_step, never, ess_threshold (threshold=0.2), ess_threshold (threshold=0.5), ess_threshold (threshold=0.8), max_weight (threshold=0.1), max_weight (threshold=0.2), max_weight (threshold=0.5)",
+  "Seeds: 20 (each seed fixes the world and the filter's randomness, the same for every variant), 160 runs"
+ ],
+ "table": {
+  "header": [
+   "Variant",
+   "Seeds",
+   "Position RMSE (m)",
+   "Resampling rate",
+   "Distinct after resampling / N",
+   "Mean ESS / N",
+   "Median NEES"
+  ],
+  "rows": [
+   [
+    "Every step",
+    "20",
+    "0.485 \u00b1 0.37",
+    "1 \u00b1 0",
+    "0.642 \u00b1 0.093",
+    "0.591 \u00b1 0.14",
+    "46.1 \u00b1 1.4e+02"
+   ],
+   [
+    "Never",
+    "20",
+    "1.39 \u00b1 0.44",
+    "0 \u00b1 0",
+    "1 \u00b1 0",
+    "0.0106 \u00b1 0.00049",
+    "1.6e+09 \u00b1 1.1e+09"
+   ],
+   [
+    "ESS threshold (0.2)",
+    "20",
+    "0.474 \u00b1 0.34",
+    "0.342 \u00b1 0.13",
+    "0.254 \u00b1 0.017",
+    "0.351 \u00b1 0.064",
+    "50.5 \u00b1 1.5e+02"
+   ],
+   [
+    "ESS threshold (0.5)",
+    "20",
+    "0.458 \u00b1 0.34",
+    "0.535 \u00b1 0.13",
+    "0.438 \u00b1 0.046",
+    "0.474 \u00b1 0.089",
+    "45.9 \u00b1 1.4e+02"
+   ],
+   [
+    "ESS threshold (0.8)",
+    "20",
+    "0.466 \u00b1 0.36",
+    "0.8 \u00b1 0.075",
+    "0.582 \u00b1 0.089",
+    "0.565 \u00b1 0.13",
+    "45.6 \u00b1 1.4e+02"
+   ],
+   [
+    "Max weight (0.1)",
+    "20",
+    "0.477 \u00b1 0.34",
+    "0.353 \u00b1 0.15",
+    "0.261 \u00b1 0.018",
+    "0.352 \u00b1 0.059",
+    "48.2 \u00b1 1.4e+02"
+   ],
+   [
+    "Max weight (0.2)",
+    "20",
+    "0.452 \u00b1 0.32",
+    "0.483 \u00b1 0.13",
+    "0.402 \u00b1 0.04",
+    "0.444 \u00b1 0.077",
+    "43.3 \u00b1 1.4e+02"
+   ],
+   [
+    "Max weight (0.5)",
+    "20",
+    "0.483 \u00b1 0.37",
+    "0.747 \u00b1 0.087",
+    "0.556 \u00b1 0.08",
+    "0.547 \u00b1 0.12",
+    "46 \u00b1 1.4e+02"
+   ]
+  ]
+ },
+ "findings": [
+  "Position RMSE: lowest is Max weight (0.2) (0.452), vs Never (1.39), a 67% difference, clearly beyond the seed-to-seed spread (95% intervals).",
+  "Distinct after resampling / N: highest is Never (1), vs ESS threshold (0.2) (0.254), a 294% difference, clearly beyond the seed-to-seed spread (95% intervals).",
+  "Mean ESS / N: highest is Every step (0.591), vs Never (0.0106), a 5493% difference, clearly beyond the seed-to-seed spread (95% intervals).",
+  "Median NEES: closest to the ideal 3 is Max weight (0.2) (43.3), vs Never (1.6e+09), a 100% difference, clearly beyond the seed-to-seed spread (95% intervals)."
+ ],
+ "figures": [
+  "figures/metrics.png",
+  "figures/trace_ess.png",
+  "figures/trace_position_error.png"
+ ],
+ "notes": [],
+ "runs": 160,
+ "expected_runs": 160,
+ "hosts": [
+  "aiserver"
+ ]
+}

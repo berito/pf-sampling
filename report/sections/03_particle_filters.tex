@@ -1,16 +1,87 @@
 \section{Particle Filters as Approximate Inference}\label{sec:particle-filters}
 
 \subsection{Sequential importance sampling}
-% - Importance sampling over trajectories; the weight recursion; degeneracy.
+
+Importance sampling estimates expectations under a target density $p$ from samples of a proposal density $q$ that
+is easier to sample: with $\x^{(i)} \sim q$ and weights $\w^{(i)} \propto p(\x^{(i)}) / q(\x^{(i)})$ normalized to sum
+to one, $\mathbb{E}_p[f] \approx \sum_i \w^{(i)} f(\x^{(i)})$. The particle filter applies this to the posterior over
+trajectories, $p(\x_{0:t} \mid \z_{1:t}, \uu_{1:t})$, and builds the samples one time step at a time
+\cite{arulampalam2002tutorial,doucet2011tutorial}. Each of the $N$ particles extends its trajectory with a new pose
+drawn from a proposal $q(\x_t \mid \x_{t-1}, \z_t, \uu_t)$, and by the factorization \eqref{eq:joint} its weight
+is updated recursively:
+\begin{equation}
+  \w_t^{(i)} \;\propto\; \w_{t-1}^{(i)}\,
+  \frac{p(\z_t \mid \x_t^{(i)})\; p(\x_t^{(i)} \mid \x_{t-1}^{(i)}, \uu_t)}
+       {q(\x_t^{(i)} \mid \x_{t-1}^{(i)}, \z_t, \uu_t)}.
+  \label{eq:weight}
+\end{equation}
+The weighted particles approximate the filtering belief \eqref{eq:bayes-filter}, and the pose estimate is their
+weighted mean.
+
+The variance of the weights can only grow over time \cite{doucet2011tutorial}. After a few steps almost all the
+weight sits on a few particles and the rest contribute nothing, which is called weight degeneracy. A common measure
+is the effective sample size
+\begin{equation}
+  \mathrm{ESS} = \frac{1}{\sum_{i=1}^{N} \bigl(\w_t^{(i)}\bigr)^2},
+  \label{eq:ess}
+\end{equation}
+which is $N$ for equal weights and 1 when one particle holds all the weight. Two things work against degeneracy: a
+proposal that places particles where the posterior is high, and resampling.
 
 \subsection{Proposal distributions}
-% - Motion-model (bootstrap) proposal; measurement-informed proposals: extended Kalman PF, FastSLAM 2.0;
-%   auxiliary particle filter.
+
+The \emph{motion-model} (bootstrap) proposal $q = p(\x_t \mid \x_{t-1}, \uu_t)$ \cite{gordon1993novel} cancels the
+motion term in \eqref{eq:weight}, so the weight is just the likelihood of the observation. It is simple, but it
+ignores $\z_t$ when sampling: if the sensor is more precise than the motion, most particles land where the likelihood
+is small.
+
+Given $\x_{t-1}$, the proposal that minimizes the variance of the weight is $p(\x_t \mid \x_{t-1}, \z_t, \uu_t)$,
+the pose distribution after both the motion and the new observation \cite{doucet2011tutorial}. It rarely has a closed
+form, and the measurement-informed proposals approximate it:
+\begin{itemize}
+  \item The \emph{extended Kalman particle filter} gives each particle an extended Kalman filter. The filter predicts
+        the pose with the motion model, updates it with the linearized measurement model, and the new pose is drawn
+        from the resulting Gaussian; the weight then follows \eqref{eq:weight} with that Gaussian as $q$
+        \cite{elfring2021particle}.
+  \item The \emph{auxiliary particle filter} \cite{pitt1999filtering} first decides which particles to continue.
+        It propagates each particle once, weights it by how well the propagated pose explains $\z_t$, and resamples
+        by these first-stage weights. The selected particles are then propagated again with the motion model, and
+        their weights are divided by the first-stage likelihood.
+  \item \emph{FastSLAM 2.0} \cite{montemerlo2003fastslam2} samples the pose from a Gaussian that combines the
+        predicted pose with the observations of already mapped landmarks, including the uncertainty of those
+        landmarks. The weight is the predictive likelihood of the observations. FastSLAM 1.0
+        \cite{montemerlo2002fastslam} uses the motion-model proposal.
+\end{itemize}
+Measurement-informed proposals cost more per particle. They should therefore reach a given accuracy with fewer
+particles; whether they pay off at a given runtime is an empirical question.
 
 \subsection{Resampling}
-% - Multinomial, residual, stratified, systematic; when to resample (every step, ESS threshold, max weight).
+
+Resampling draws $N$ new particles from the current ones, with probability proportional to their weights, and resets
+all weights to $1/N$. Particles with negligible weight disappear and heavy particles are copied. The schemes differ
+in how much randomness they add to the number of copies $N_i$ of particle $i$, whose expectation is $N \w^{(i)}$ in
+all four \cite{douc2005comparison,hol2006resampling}:
+\begin{itemize}
+  \item \emph{Multinomial}: $N$ independent draws from the weights, so $N_i$ is binomial.
+  \item \emph{Residual}: $\lfloor N \w^{(i)} \rfloor$ copies of each particle deterministically, and the remaining
+        particles by multinomial sampling from the residual weights.
+  \item \emph{Stratified}: the interval $[0, 1)$ is split into $N$ equal strata, one uniform number is drawn in each,
+        and each number selects the particle whose cumulative weight covers it.
+  \item \emph{Systematic}: a single uniform number $u \in [0, 1/N)$ gives the $N$ positions $u + (j-1)/N$, which
+        select particles in the same way.
+\end{itemize}
+Residual, stratified and systematic resampling have lower variance than multinomial resampling
+\cite{douc2005comparison}, and all four can be implemented in $O(N)$ time.
+
+Resampling removes weight degeneracy but causes sample impoverishment: after resampling many particles are copies of
+the same pose, and the diversity lost cannot be recovered. Resampling at every step, as the original bootstrap filter
+does, therefore throws away information when the weights are still balanced. Adaptive rules resample only when the
+weights have degenerated. The rules compared here resample when $\mathrm{ESS} < \tau N$, or when the largest weight is
+too large, $1 / \max_i \w^{(i)} < \tau N$, for a threshold $\tau \in (0, 1)$ \cite{elfring2021particle}.
 
 \subsection{MCMC moves}
-% - Resample-move: Metropolis-Hastings steps after resampling to restore diversity.
 
-\todo{Particle filters.}
+Resample-move algorithms \cite{gilks2001following} restore diversity after resampling by applying a Markov chain Monte
+Carlo kernel that leaves the posterior invariant, such as a few Metropolis-Hastings steps, to each particle. Copies
+of the same particle then move apart without changing the distribution they represent. The experiments in this
+report do not use moves; they are a natural next step (\cref{sec:discussion}).

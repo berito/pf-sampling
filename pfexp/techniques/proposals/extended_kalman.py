@@ -19,6 +19,9 @@ Corrections (all on by default; `upstream_bugs=True` reproduces the upstream beh
    place, so its prior is centred on the EKF-updated state).
 5. The measurement Jacobian of the angle uses -dy/r^2, dx/r^2 (upstream: dy/dx forms that divide by zero
    at dx = 0).
+6. Position differences in the prior and proposal densities are wrapped to the cyclic world. A pose sampled
+   just across the world's edge is moved to the other side by `validate`; unwrapped, it looks a world-width
+   away from its prediction and gets an arbitrarily large weight (upstream compares the raw differences).
 """
 import numpy as np
 
@@ -94,8 +97,10 @@ class ExtendedKalman(Proposal):
         prior_diff = poses - (state if bugs else predicted)
         proposal_diff = poses - state
         if not bugs:
-            prior_diff[:, 2] = wrap_angle(prior_diff[:, 2])
-            proposal_diff[:, 2] = wrap_angle(proposal_diff[:, 2])
+            size = np.asarray(model.size, dtype=float)
+            for diff in (prior_diff, proposal_diff):
+                diff[:, :2] = (diff[:, :2] + size / 2) % size - size / 2
+                diff[:, 2] = wrap_angle(diff[:, 2])
         with np.errstate(divide="ignore"):
             log_weights = (np.log(particles.weights)
                            + model.log_likelihood(poses, measurement)

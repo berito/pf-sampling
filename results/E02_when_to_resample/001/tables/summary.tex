@@ -1,0 +1,14 @@
+\begin{tabular}{lllllll}
+\toprule
+Variant & Seeds & \shortstack[l]{Position RMSE\\(m)} & \shortstack[l]{Resampling\\rate} & \shortstack[l]{Distinct after\\resampling / N} & Mean ESS / N & Median NEES \\
+\midrule
+Every step & 20 & 0.485 $\pm$ 0.37 & 1 $\pm$ 0 & 0.642 $\pm$ 0.093 & 0.591 $\pm$ 0.14 & 46.1 $\pm$ 1.4e+02 \\
+Never & 20 & 1.39 $\pm$ 0.44 & 0 $\pm$ 0 & 1 $\pm$ 0 & 0.0106 $\pm$ 0.00049 & 1.6e+09 $\pm$ 1.1e+09 \\
+ESS threshold (0.2) & 20 & 0.474 $\pm$ 0.34 & 0.342 $\pm$ 0.13 & 0.254 $\pm$ 0.017 & 0.351 $\pm$ 0.064 & 50.5 $\pm$ 1.5e+02 \\
+ESS threshold (0.5) & 20 & 0.458 $\pm$ 0.34 & 0.535 $\pm$ 0.13 & 0.438 $\pm$ 0.046 & 0.474 $\pm$ 0.089 & 45.9 $\pm$ 1.4e+02 \\
+ESS threshold (0.8) & 20 & 0.466 $\pm$ 0.36 & 0.8 $\pm$ 0.075 & 0.582 $\pm$ 0.089 & 0.565 $\pm$ 0.13 & 45.6 $\pm$ 1.4e+02 \\
+Max weight (0.1) & 20 & 0.477 $\pm$ 0.34 & 0.353 $\pm$ 0.15 & 0.261 $\pm$ 0.018 & 0.352 $\pm$ 0.059 & 48.2 $\pm$ 1.4e+02 \\
+Max weight (0.2) & 20 & 0.452 $\pm$ 0.32 & 0.483 $\pm$ 0.13 & 0.402 $\pm$ 0.04 & 0.444 $\pm$ 0.077 & 43.3 $\pm$ 1.4e+02 \\
+Max weight (0.5) & 20 & 0.483 $\pm$ 0.37 & 0.747 $\pm$ 0.087 & 0.556 $\pm$ 0.08 & 0.547 $\pm$ 0.12 & 46 $\pm$ 1.4e+02 \\
+\bottomrule
+\end{tabular}

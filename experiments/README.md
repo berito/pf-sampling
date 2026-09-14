@@ -1,8 +1,8 @@
 # Experiments
 
 Each file here is one experiment: one question, the settings that stay fixed, the settings that change, and
-how many seeds (repeats). Running it stores every run under `results/<experiment>/` and builds tables, figures
-and a `summary.md`.
+how many seeds (repeats). Running it stores every run in a numbered result set, `results/<experiment>/001/`, and
+builds tables, figures and a `summary.md` there.
 
 All commands below are run from the project folder. `make ...` works on the host and inside the container.
 The full command is shown under each one, if you prefer not to use make (run it inside the container,
@@ -11,7 +11,7 @@ or put `docker exec pf-sampling-dev` in front).
 ## Where things stand
 
 ```bash
-make status         # every experiment: runs done, to do, and made with older code
+make status         # every experiment: its result set, runs done and to do, changed parameters
 make status E=E03   # only the experiments starting with E03
 ```
 `python -m pfexp.run experiments/*.yaml --dry-run`
@@ -59,8 +59,60 @@ real time of every run.
    ```bash
    make results            # summary in the terminal, and results/report.html with every table and figure
    ```
-   Each experiment also has `results/<experiment>/summary.md` (question, setup, table, automatic findings,
-   figures), `tables/` (`.md`, `.tex`, `.csv`) and `figures/` (`.pdf`, `.png`).
+   Each result set also has `results/<experiment>/<number>/summary.md` (question, setup, table, automatic
+   findings, figures), `tables/` (`.md`, `.tex`, `.csv`) and `figures/` (`.pdf`, `.png`).
+
+## Numbered result sets
+
+Every experiment keeps its results in numbered sets, each with the parameters it was run with:
+
+```
+results/E04_particle_count/
+  current.txt          the number the report and make results show (the newest, unless you choose one)
+  001/                 parameters.yaml, info.json (date, computer, code version, note), runs/, tables/, figures/, ...
+  002/
+```
+
+There are three situations:
+
+| Situation | Do | What happens |
+|---|---|---|
+| A run was stopped, or you added seeds | `make run E=E04` (or `make start`) | Continues the current number; only missing runs run |
+| The results are wrong: a bug, a wrong setting, a broken setup | fix it, then `make redo E=E04` | The current number is deleted and run again under the same number |
+| The results are fine, and you change a parameter to see its effect | edit the YAML, then `make new E=E04 NOTE="stratified resampler"` | A new number (`002`) with its own data; `001` stays as it was |
+
+`python -m pfexp.run experiments/E04_particle_count.yaml --redo` / `--new --note "..."`. In the background:
+`make start E=E04 ARGS=--redo`, or `make start E=E04 ARGS=--new NOTE="..."`.
+
+If the YAML's parameters differ from those of the current number, `make run` stops and asks which of the last two it
+is, so results of different settings are never mixed. The same happens if runs are still to do and the stored
+ones were made with a different version of the code; if that change cannot affect the numbers, continue with
+`ARGS=--code-change-ok`.
+
+Choose which number the report and `make results` show, and compare numbers:
+
+```bash
+make use E=E04 N=1
+make compare DIRS="results/E04_particle_count/001 results/E04_particle_count/002"
+```
+`python -m pfexp.run experiments/E04_particle_count.yaml --use 1`
+
+## Running in the background
+
+`make run` stops when the terminal it runs in is closed, and so does a VS Code window. For long runs, start
+them in the background instead. They keep running inside the container after VS Code, the terminal or an SSH
+connection is closed:
+
+```bash
+make start E=E01        # like make run E=E01, in the background (make start-all: every experiment)
+make running            # is it still going?
+make log                # follow its output; Ctrl+C stops following, not the run
+make stop               # stop it; finished runs are kept, make start E=E01 again continues
+```
+`bash tools/background.sh start E01 experiments/E01_*.yaml` (output in `.build/logs/E01.log`)
+
+One background run at a time, so runs don't compete for the same cores. The container restarts by itself
+after a reboot; a run cut off by a reboot does not, so start it again and it skips what is done.
 
 ## Resample-move (E05)
 
@@ -93,7 +145,7 @@ See [report/README.md](../report/README.md). In short: write the text in `report
 ## Running on several computers
 
 `results/` is tracked in git, and each run is its own small file named by a hash of its settings and seed.
-So you can:
+So you can continue a result set on another computer:
 
 ```bash
 git pull                   # get runs made elsewhere
@@ -101,17 +153,20 @@ make run E=E03             # runs only what is still missing
 git add results && git commit -m "E03 runs"   && git push
 ```
 
-Give each computer different experiments. If two computers make the same run, git reports a conflict on
-that run's file. The numbers are the same (only the host, date and runtime differ), so keep either copy.
+Give each computer different experiments. Start a new number (`make new`, `make redo`, or an experiment's first
+run) on one computer and push it before another computer continues it, so both use the same set. If two
+computers make the same run, git reports a conflict on that run's file. The numbers are the same (only the host,
+date and runtime differ), so keep either copy.
 
 ## Changing an experiment
 
-- **Changing a setting in the YAML** gives those runs new names, so they run fresh. Runs of the old settings stay
-  on disk but are left out of the tables (the summary says how many).
+- **Changing a parameter in the YAML** (`filter`, `world`, `fixed`, `vary`): `make new` if it is a deliberate
+  change, `make redo` if the earlier setting was a mistake (see "Numbered result sets").
 - **Changing the code** that produces numbers (`pfexp/filters`, `techniques`, `metrics`, `worlds.py`, ...) marks
-  the stored runs as made with older code. `make status` and the summary show this. Rerun with
-  `make run E=<experiment> ARGS=--rerun` if the change can affect the numbers.
-- **More seeds**: raise `seeds:`. Only the new seeds run.
+  the stored runs as made with older code. `make status` and the summary show this. `make redo E=<experiment>`
+  if the change can affect the numbers.
+- **More seeds**: raise `seeds:`. Only the new seeds run, into the same number.
+- **Title, question, hypothesis or `report:`** do not change any run: `make analyse E=<experiment>`.
 
 ## Adding an experiment
 
@@ -151,6 +206,7 @@ Technique names are the file names in `pfexp/techniques/<kind>/`. Metric names a
 |---|---|
 | `Error: No such container: pf-sampling-dev` | `make container` (build and start it), then `make setup` once |
 | `E05_resample_move: skipped, cannot run yet` | The reason is printed below it, e.g. the plug-in file does not exist yet |
-| `N runs were made with an older version of the code` | Rerun with `ARGS=--rerun` if the code change affects the numbers |
+| `cannot continue 001: parameters changed` | `make redo E=...` if 001 was wrong, `make new E=... NOTE="..."` if the change is on purpose |
+| `N runs were made with an older version of the code` | `make redo E=...` if the code change affects the numbers |
 | `Incomplete: 12 of 160 runs stored` | The run was stopped. Run the same command again |
 | A run crashes | The error names the setting. Try a single run in Python (see pfexp/README.md, "Running a filter") |

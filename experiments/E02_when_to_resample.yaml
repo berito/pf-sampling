@@ -27,5 +27,5 @@ seeds: 20
 quick:
   seeds: 3
 report:
-  metrics: [position_rmse, resample_rate, unique_after_resampling, ess_mean, collapses, nees_mean]
+  metrics: [position_rmse, resample_rate, unique_after_resampling, ess_mean, nees_median]
   traces: [ess, position_error]

@@ -1,0 +1,140 @@
+{
+ "id": "E03_proposal_slam",
+ "title": "Which proposal distribution? (FastSLAM 1.0 vs 2.0)",
+ "question": "Does FastSLAM 2.0, which samples the pose from a proposal that includes the current observation, give better pose and map estimates than FastSLAM 1.0, and does the advantage shrink with more particles?",
+ "number": "001",
+ "note": "",
+ "hypothesis": "FastSLAM 2.0 is more accurate and keeps a higher ESS, especially with few particles, at a higher runtime per step (Montemerlo et al., 2003).",
+ "setup": [
+  "Result set 001",
+  "Filter: fastslam",
+  "Fixed: resampler = systematic",
+  "Varied: proposal: fastslam1, fastslam2; n_particles: 5, 10, 25, 100",
+  "Seeds: 20 (each seed fixes the world and the filter's randomness, the same for every variant), 160 runs"
+ ],
+ "table": {
+  "header": [
+   "Proposal",
+   "Particles",
+   "Seeds",
+   "Position RMSE (m)",
+   "ATE (aligned) (m)",
+   "Map error (aligned) (m)",
+   "Mean ESS / N",
+   "Runtime per step (ms)"
+  ],
+  "rows": [
+   [
+    "FastSLAM 1.0",
+    "5",
+    "20",
+    "1.12 \u00b1 0.56",
+    "0.335 \u00b1 0.052",
+    "0.16 \u00b1 0.047",
+    "0.764 \u00b1 0.0061",
+    "1.28 \u00b1 0.0076"
+   ],
+   [
+    "FastSLAM 1.0",
+    "10",
+    "20",
+    "0.958 \u00b1 0.61",
+    "0.255 \u00b1 0.033",
+    "0.111 \u00b1 0.034",
+    "0.753 \u00b1 0.0043",
+    "1.39 \u00b1 0.0064"
+   ],
+   [
+    "FastSLAM 1.0",
+    "25",
+    "20",
+    "0.673 \u00b1 0.4",
+    "0.212 \u00b1 0.05",
+    "0.0946 \u00b1 0.025",
+    "0.75 \u00b1 0.0023",
+    "1.86 \u00b1 0.013"
+   ],
+   [
+    "FastSLAM 1.0",
+    "100",
+    "20",
+    "0.777 \u00b1 0.35",
+    "0.247 \u00b1 0.094",
+    "0.0565 \u00b1 0.016",
+    "0.748 \u00b1 0.0022",
+    "3.19 \u00b1 0.018"
+   ],
+   [
+    "FastSLAM 2.0",
+    "5",
+    "20",
+    "0.773 \u00b1 0.43",
+    "0.257 \u00b1 0.037",
+    "0.102 \u00b1 0.029",
+    "0.813 \u00b1 0.0042",
+    "1.98 \u00b1 0.013"
+   ],
+   [
+    "FastSLAM 2.0",
+    "10",
+    "20",
+    "0.774 \u00b1 0.47",
+    "0.215 \u00b1 0.046",
+    "0.0909 \u00b1 0.026",
+    "0.802 \u00b1 0.0038",
+    "2.15 \u00b1 0.012"
+   ],
+   [
+    "FastSLAM 2.0",
+    "25",
+    "20",
+    "0.748 \u00b1 0.47",
+    "0.275 \u00b1 0.089",
+    "0.078 \u00b1 0.015",
+    "0.795 \u00b1 0.0025",
+    "2.66 \u00b1 0.028"
+   ],
+   [
+    "FastSLAM 2.0",
+    "100",
+    "20",
+    "0.737 \u00b1 0.33",
+    "0.228 \u00b1 0.067",
+    "0.0479 \u00b1 0.012",
+    "0.793 \u00b1 0.0024",
+    "4.79 \u00b1 0.27"
+   ]
+  ]
+ },
+ "findings": [
+  "At n particles = 5: Position RMSE: lowest is FastSLAM 2.0 (0.773), vs FastSLAM 1.0 (1.12), a 31% difference, within the seed-to-seed spread (95% intervals).",
+  "At n particles = 5: ATE (aligned): lowest is FastSLAM 2.0 (0.257), vs FastSLAM 1.0 (0.335), a 23% difference, clearly beyond the seed-to-seed spread (95% intervals).",
+  "At n particles = 5: Map error (aligned): lowest is FastSLAM 2.0 (0.102), vs FastSLAM 1.0 (0.16), a 36% difference, clearly beyond the seed-to-seed spread (95% intervals).",
+  "At n particles = 5: Mean ESS / N: highest is FastSLAM 2.0 (0.813), vs FastSLAM 1.0 (0.764), a 6% difference, clearly beyond the seed-to-seed spread (95% intervals).",
+  "At n particles = 5: Runtime per step: lowest is FastSLAM 1.0 (1.28), vs FastSLAM 2.0 (1.98), a 36% difference, clearly beyond the seed-to-seed spread (95% intervals).",
+  "At n particles = 10: Position RMSE: lowest is FastSLAM 2.0 (0.774), vs FastSLAM 1.0 (0.958), a 19% difference, within the seed-to-seed spread (95% intervals).",
+  "At n particles = 10: ATE (aligned): lowest is FastSLAM 2.0 (0.215), vs FastSLAM 1.0 (0.255), a 16% difference, clearly beyond the seed-to-seed spread (95% intervals).",
+  "At n particles = 10: Map error (aligned): lowest is FastSLAM 2.0 (0.0909), vs FastSLAM 1.0 (0.111), a 18% difference, within the seed-to-seed spread (95% intervals).",
+  "At n particles = 10: Mean ESS / N: highest is FastSLAM 2.0 (0.802), vs FastSLAM 1.0 (0.753), a 6% difference, clearly beyond the seed-to-seed spread (95% intervals).",
+  "At n particles = 10: Runtime per step: lowest is FastSLAM 1.0 (1.39), vs FastSLAM 2.0 (2.15), a 35% difference, clearly beyond the seed-to-seed spread (95% intervals).",
+  "At n particles = 25: Position RMSE: lowest is FastSLAM 1.0 (0.673), vs FastSLAM 2.0 (0.748), a 10% difference, within the seed-to-seed spread (95% intervals).",
+  "At n particles = 25: ATE (aligned): lowest is FastSLAM 1.0 (0.212), vs FastSLAM 2.0 (0.275), a 23% difference, clearly beyond the seed-to-seed spread (95% intervals).",
+  "At n particles = 25: Map error (aligned): lowest is FastSLAM 2.0 (0.078), vs FastSLAM 1.0 (0.0946), a 18% difference, within the seed-to-seed spread (95% intervals).",
+  "At n particles = 25: Mean ESS / N: highest is FastSLAM 2.0 (0.795), vs FastSLAM 1.0 (0.75), a 6% difference, clearly beyond the seed-to-seed spread (95% intervals).",
+  "At n particles = 25: Runtime per step: lowest is FastSLAM 1.0 (1.86), vs FastSLAM 2.0 (2.66), a 30% difference, clearly beyond the seed-to-seed spread (95% intervals).",
+  "At n particles = 100: Position RMSE: lowest is FastSLAM 2.0 (0.737), vs FastSLAM 1.0 (0.777), a 5% difference, within the seed-to-seed spread (95% intervals).",
+  "At n particles = 100: ATE (aligned): lowest is FastSLAM 2.0 (0.228), vs FastSLAM 1.0 (0.247), a 8% difference, within the seed-to-seed spread (95% intervals).",
+  "At n particles = 100: Map error (aligned): lowest is FastSLAM 2.0 (0.0479), vs FastSLAM 1.0 (0.0565), a 15% difference, within the seed-to-seed spread (95% intervals).",
+  "At n particles = 100: Mean ESS / N: highest is FastSLAM 2.0 (0.793), vs FastSLAM 1.0 (0.748), a 6% difference, clearly beyond the seed-to-seed spread (95% intervals).",
+  "At n particles = 100: Runtime per step: lowest is FastSLAM 1.0 (3.19), vs FastSLAM 2.0 (4.79), a 33% difference, clearly beyond the seed-to-seed spread (95% intervals)."
+ ],
+ "figures": [
+  "figures/metrics.png"
+ ],
+ "notes": [],
+ "runs": 160,
+ "expected_runs": 160,
+ "hosts": [
+  "aiserver"
+ ]
+}

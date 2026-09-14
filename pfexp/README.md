@@ -24,6 +24,8 @@ The guide is [experiments/README.md](../experiments/README.md) (with short `make
 python -m pfexp.run experiments/E01_resampling_scheme_localization.yaml     # runs what is missing, then builds the report
 python -m pfexp.run experiments/*.yaml --quick                 # small version into results/quick/
 python -m pfexp.analysis experiments/E01_resampling_scheme_localization.yaml  # rebuild tables and figures only
+python -m pfexp.run experiments/E04_particle_count.yaml --new --note "what changed"   # next numbered result set
+python -m pfexp.run experiments/E04_particle_count.yaml --redo   # the current result set was wrong: run it again
 python -m pfexp.compare results/E01_resampling_scheme_localization results/E05_resample_move   # across experiments
 ```
 

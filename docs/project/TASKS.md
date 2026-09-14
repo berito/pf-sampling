@@ -14,19 +14,21 @@ Rules:
 - Commits are made by the user, not by Claude.
 - `results/` is tracked in git: experiments resume on any computer — finished runs are skipped, only missing runs execute.
 
-## Milestones
+## Phases
 
-| # | Milestone | Done when | Status |
+Each phase has a fixed scope and ends with a complete result: its experiments run and reviewed, and a report that
+could be handed in as it is. Finish the current phase before starting the next. Ideas and gaps found along the way go
+to **Later**, never into the current phase. Phase 1 is the course requirement; the others only if time allows.
+
+| Phase | Scope | Ends with | Status |
 |---|---|---|---|
-| M0 | **Setup complete** | vendor code clean in `vendor/`, our tools separate, gmapping builds in the container | [x] |
-| M1 | **Shareable project structure** | private material in `docs/`; vendors + datasets fetched by script; a copy without `docs/`, `vendor/`, `datasets/` rebuilds and runs | [x] |
-| M2 | **Existing code experiment-ready (plug-ins)** | localization + borrowed FastSLAM run headless, seeded, with techniques and metrics as registered plug-ins | [x] |
-| M3 | **Experiment pipeline + analysis ready** | an experiment YAML produces runs.csv, traces, tables, figures and summary.md; `python3 show_results.py` shows everything with no install | [x] |
-| M4 | **Core experiments done** | E01–E04: resampling scheme, when to resample, proposal, particle count | [ ] |
-| M5 | **New sampler added** | resample-move implemented as a plug-in and compared against M4 | [ ] |
-| M6 | *(optional)* **Real-data check** | gmapping ESS sweep on the CARMEN logs | [ ] |
-| M7 | **Report (LaTeX)** | `make -C report` builds report/report.pdf with the background, method and every experiment's results | [~] |
-| M8 | *(personal, after the report)* **Teach and share: blog article** | an article on your GitHub page explaining particle filters, SLAM, the filter families and the sampling techniques, with this project's experiment results | [ ] |
+| **1 Core study** | setup, pipeline, E01-E04 (resampling scheme, when to resample, proposal, particle count), full report text | **Report v1**, ready to hand in | [x] |
+| **2 Resample-move** *(if time)* | MCMC move plug-in, E05 compared with E01 | Report v2 (adds a section) | [ ] |
+| **3 Wider coverage** *(if time)* | E07 when to resample in FastSLAM, E08 resamplers with FastSLAM 2.0, decisions on SLAM proposals and crossed combinations | Report v3 | [ ] |
+| **4 Real data** *(if time)* | gmapping on the Intel log (E06) | Report v4 | [ ] |
+| **Later** | not scheduled; picked only when a phase is closed | | |
+
+Progress check: `python .claude/tools/check_milestones.py` (the current phase) or `... all`.
 
 ## Open decisions
 - **Before making the GitHub repo public again:** remove `docs/` from the whole git history (it holds 43 publisher paper PDFs, the proposal PDF and personal notes, all pushed in the first commit), e.g. with `git filter-repo --path docs --invert-paths` + force push, or a fresh repo; and ignore `docs/` in `.gitignore`. Repo made private on 2026-09-13 until the work is finished.
@@ -69,7 +71,9 @@ pf-sampling/
 
 ---
 
-## M0 — Setup complete
+# Phase 1 — Core study (ends with report v1, ready to hand in)
+
+### M0 — Setup complete
 - [x] 0.0 Start the pf-sampling-dev container; confirm python/numpy/scipy versions and that the project is mounted
 - [x] 0.1 Move the four upstream repos from `code/` to `vendor/` (flattened: `vendor/particle_filter_tutorial`,
       `vendor/pythonrobotics`, `vendor/openslam_gmapping`, `vendor/grid_rbpf_python`)
@@ -84,7 +88,7 @@ pf-sampling/
 - [x] 0.8 Check: `git -C vendor/<repo> status` clean for all four, and gmapping builds + runs inside the container
 - [x] 0.9 Build artifacts → `.build/`; `data/` → `datasets/`; stray gmapping `.dat` outputs removed from the root
 
-## M1 — Shareable project structure
+### M1 — Shareable project structure
 - [x] S1 Move private material into `docs/` (`project/`, `study/`, `papers/`); today's README → `docs/project/BRIEF.md`; update all links
       (all relative links checked; shareable files no longer point into `docs/`)
 - [x] S2 `vendors.yaml` + `tools/fetch_vendors.py` — pinned commit, shallow, sparse for PythonRobotics; `--check` reports status only
@@ -99,7 +103,7 @@ pf-sampling/
       (96 KB copy, no docs/ references; fresh container: fetch + build OK, gmapping intel.log 910-step ESS trace, grid runner OK)
 - [x] S8 ⏸ CHECKPOINT — reviewed and approved by user
 
-## M2 — Existing code experiment-ready, as plug-ins (`pfexp/`)
+### M2 — Existing code experiment-ready, as plug-ins (`pfexp/`)
 - [x] A1 Baseline: run each vendor demo headless once (from `results/baseline/`, not `vendor/`)
       (`tools/run_vendor_baseline.py`: SIR, EKPF, resampling stats, FastSLAM 1/2; seeded, reproducible byte-for-byte;
       upstream bugs found → `docs/study/VENDOR_REVIEW.md`)
@@ -116,7 +120,7 @@ pf-sampling/
 - [x] A11 Test: nothing in `pfexp/`, `tools/`, `tests/` references `docs/`
 - [x] A12 ⏸ CHECKPOINT — reviewed and approved by user
 
-## M3 — Experiment pipeline + analysis ready
+### M3 — Experiment pipeline + analysis ready
 - [x] B1 Resumable runner: experiment YAML → expand the varied setting × seeds → each run gets a stable ID from its settings + seed
       → skip runs already in `results/<exp>/runs/` → run only missing ones → `--rerun` to force
 - [x] B2 Outputs, one small file per run so git syncs cleanly across computers: `runs/<run_id>.json` (settings, metrics, host, date,
@@ -143,49 +147,74 @@ pf-sampling/
       typographic characters (em dashes, arrows, Unicode maths) replaced with plain text in all product files
 - [x] B7 ⏸ CHECKPOINT — reviewed with user; next: user commits, pushes and tests on the server computer
 
-## M4 — Core experiments done (one YAML each)
-Configs are ready; run them with `make run E=E01` … `E=E04` (guide: experiments/README.md). Progress: `make status`, or `python .claude/tools/check_milestones.py M4`.
-- [ ] C1 `E01_resampling_scheme_localization` + `E01_resampling_scheme_slam` — 4 schemes × N, localization + FastSLAM1
-- [ ] C2 `E02_when_to_resample` — every step, never, ESS threshold (0.2/0.5/0.8), max-weight (0.1/0.2/0.5)
-- [ ] C3 `E03_proposal_localization` (motion model vs auxiliary PF vs extended Kalman PF × N) + `E03_proposal_slam` (FS1 vs FS2 × N)
-- [ ] C4 `E04_particle_count` — sweep N, RMSE + runtime
-- [ ] C5 ⏸ CHECKPOINT — results review (note: mean NEES reaches ~1e8, dominated by the uniform start — decide whether to report median or skip early steps)
+### M4 — Core experiments E01-E04 (one YAML each)
+Configs are ready; run them with `make run E=E01` … `E=E04` (guide: experiments/README.md). Progress: `make status`, or `python .claude/tools/check_milestones.py P1`.
+- [x] C0 Numbered experiments: each experiment keeps numbered result sets `results/<E>/001/`, `002/`, ... with the
+      parameters they ran with; `make redo` replaces a broken one, `make new` starts the next number after a deliberate
+      parameter change, `make use` picks the one the report shows; the runner refuses to mix changed parameters or code
+- [x] C1 `E01_resampling_scheme_localization` + `E01_resampling_scheme_slam` — 4 schemes × N, localization + FastSLAM1
+- [x] C2 `E02_when_to_resample` — every step, never, ESS threshold (0.2/0.5/0.8), max-weight (0.1/0.2/0.5)
+- [x] C3 `E03_proposal_localization` (motion model vs auxiliary PF vs extended Kalman PF × N) + `E03_proposal_slam` (FS1 vs FS2 × N)
+- [x] C4 `E04_particle_count` — sweep N, RMSE + runtime
+- [x] C5 ⏸ CHECKPOINT — results review (review points handled: EKPF edge bug fixed and E01-E04 redone, findings compare like with like, median NEES, resampler runtime explained in the report)
 
-## M5 — New sampler added (the only new filter code)
-- [ ] D1 `techniques/moves/resample_move_mh.py` — Metropolis-Hastings moves after resampling
-- [ ] D2 Run `E05_resample_move` (config ready, skipped until D1 exists); compare against the M4 results with `make compare`
-- [ ] D3 (optional) HMC move · unscented proposal
-
-## M6 — (optional) Real-data check with gmapping
-- [ ] E1 `E06_gmapping_resampling` — resampling threshold × N on the Intel log; ESS only (no ground truth). Config ready: `make run E=E06`
-
-## M7 — Report (LaTeX)
+### Report v1
 - [x] R1 Structure: `report/` (main.tex, macros.tex, sections/, references.bib, Makefile), LaTeX layer in the image,
       build files in `.build/report/`; experiment tables and figures read straight from `results/` (red placeholder
       until an experiment has run). Verified: skeleton builds; pointed at quick E01 results it includes table + figure
-- [ ] R2 Background: SLAM as a DBN, Rao-Blackwellization, discrete → continuous inference
-- [ ] R3 Particle filters: importance sampling, proposals, resampling, MCMC moves
-- [ ] R4 Method: filters, worlds, implementation and upstream corrections, metrics
-- [ ] R5 Results: one subsection per experiment (choose report columns so tables stay readable)
-- [ ] R6 Discussion, conclusion, abstract, appendix; check references against the papers
-- [ ] R7 Final check: `make -C report` builds from a clean copy; no TODO left
-- [ ] R8 ⏸ CHECKPOINT — review with user
+- [x] R2 Background: SLAM as a DBN, Rao-Blackwellization, discrete → continuous inference
+- [x] R3 Particle filters: importance sampling, proposals, resampling, MCMC moves
+- [x] R4 Method: filters, worlds, implementation and upstream corrections, metrics
+- [x] R5 Results: one subsection per experiment E01-E04 (choose report columns so tables stay readable)
+- [x] R6 Discussion, conclusion, abstract, appendix; check references against the papers
+- [x] R7 Final check: `make -C report` builds from a clean copy; no TODO left
+- [x] R8 ⏸ CHECKPOINT — review with user
 
-## M8 — Teach and share: blog article *(personal, not a course deliverable; start after M7)*
-Goal: understand particle filters properly by explaining them, and have a public technical article for your profile.
-- [ ] T1 Decide where it lives: draft in this project (`blog/`) and publish to your GitHub Pages site; pick the format
-      (Markdown for Jekyll/GitHub Pages, or a notebook-style post)
-- [ ] T2 The particle filter from scratch: Bayes filtering, importance sampling, weights, resampling — with small
-      pictures of particles
-- [ ] T3 SLAM as a graphical model and Rao-Blackwellization: why FastSLAM samples the path and keeps a small EKF per landmark
-- [ ] T4 The filter families: MCL, FastSLAM 1.0, FastSLAM 2.0, gmapping, auxiliary PF, extended Kalman PF — what each changes
-- [ ] T5 Sampling techniques and their drawbacks: resampling schemes, when to resample, proposals, MCMC moves
-      (degeneracy, impoverishment, cost)
-- [ ] T6 What the experiments showed: figures and tables from `results/`, in plain language
-- [ ] T7 Lessons from reusing upstream code: the bugs found and why checking borrowed code matters
-- [ ] T8 Review for readers outside the course: clear, correct, links to the repo and the papers
-- [ ] T9 Publish on your GitHub page; link it from README.md
-- [ ] T10 ⏸ CHECKPOINT — review with user before publishing
+# Phase 2 — Resample-move *(if time; ends with report v2)*
+- [ ] D1 `techniques/moves/resample_move_mh.py` — Metropolis-Hastings moves after resampling
+- [ ] D2 Run `E05_resample_move` (config ready, skipped until D1 exists); compare against E01 with `make compare`
+- [ ] D3 Report v2: add the E05 subsection (question, setup, table, figure, findings); `make report` builds, no TODO
+- [ ] D4 ⏸ CHECKPOINT — review with user; phase closed
+
+# Phase 3 — Wider coverage *(if time; ends with report v3)*
+E01–E04 vary one sampling choice at a time and leave some filter/technique pairs out. Each gap is either run as its
+own experiment (one YAML, numbered result set) or recorded as a limitation in the report.
+- [ ] W1 `E07_when_to_resample_slam`: every step, never, ESS threshold (0.2/0.5/0.8), max weight (0.1/0.2/0.5) in
+      FastSLAM 1.0 (no new code; map error matters here since each particle carries a map)
+- [ ] W2 `E08_resampling_scheme_fastslam2`: the four resampling schemes with the FastSLAM 2.0 proposal × N (no new code)
+- [ ] W3 Measurement-aware proposals in SLAM: decide whether auxiliary / extended Kalman proposals for FastSLAM are
+      worth new code (FastSLAM 2.0 already uses the observation); if yes, write them as `fastslam` proposals and run
+      `E09_proposal_slam_extended`; if no, state it as a limitation in the report
+- [ ] W4 Crossed combinations: decide which pairs are worth crossing (e.g. resampler × when-to-resample, proposal ×
+      resampler) and keep the run count manageable; run as `E10_...` or state it as a limitation
+- [ ] W5 Report v3: a subsection per new experiment, and the limitations for what was decided against
+- [ ] W6 ⏸ CHECKPOINT — review with user; phase closed
+
+# Phase 4 — Real data *(if time; ends with report v4)*
+- [ ] E1 `E06_gmapping_resampling` — resampling threshold × N on the Intel log; ESS only (no ground truth). Config ready: `make run E=E06`
+- [ ] E2 Report v4: add the E06 subsection
+- [ ] E3 ⏸ CHECKPOINT — review with user; phase closed
+
+# Later (not scheduled)
+Picked only when a phase is closed. New ideas are added here, not to the phase in progress.
+- HMC move · unscented proposal
+- Extended Kalman proposal that resets each particle's covariance every step (linearised optimal proposal): 0.12 m
+  and ESS/N 0.58 at N=1000 in a side test, against 0.25 m and 0.22 for the current version
+- Blog article *(personal; after report v1)*:
+  Goal: understand particle filters properly by explaining them, and have a public technical article for your profile.
+  - [ ] T1 Decide where it lives: draft in this project (`blog/`) and publish to your GitHub Pages site; pick the format
+        (Markdown for Jekyll/GitHub Pages, or a notebook-style post)
+  - [ ] T2 The particle filter from scratch: Bayes filtering, importance sampling, weights, resampling — with small
+        pictures of particles
+  - [ ] T3 SLAM as a graphical model and Rao-Blackwellization: why FastSLAM samples the path and keeps a small EKF per landmark
+  - [ ] T4 The filter families: MCL, FastSLAM 1.0, FastSLAM 2.0, gmapping, auxiliary PF, extended Kalman PF — what each changes
+  - [ ] T5 Sampling techniques and their drawbacks: resampling schemes, when to resample, proposals, MCMC moves
+        (degeneracy, impoverishment, cost)
+  - [ ] T6 What the experiments showed: figures and tables from `results/`, in plain language
+  - [ ] T7 Lessons from reusing upstream code: the bugs found and why checking borrowed code matters
+  - [ ] T8 Review for readers outside the course: clear, correct, links to the repo and the papers
+  - [ ] T9 Publish on your GitHub page; link it from README.md
+  - [ ] T10 ⏸ CHECKPOINT — review with user before publishing
 
 ---
 
@@ -229,3 +258,13 @@ Goal: understand particle filters properly by explaining them, and have a public
 - 2026-09-13 — B14 done (user: anything Claude uses must sit where it can be untracked). Tooling moved from `docs/project/agent/` to `.claude/tools/`, so `.claude/` holds everything of Claude's and `docs/` only the user's notes; `# .claude/` added next to `# docs/` in .gitignore. `tools/grid_rbpf_headless.py` (setup-phase exploration, unused by the product) moved there; its upstream repo removed from vendors.yaml, THIRD_PARTY.md and README credits, and opencv-python-headless from requirements-base.txt (image rebuilt). Em dashes, arrows, middle dots and Unicode maths replaced with plain text in product files; the checker now flags them.
 - 2026-09-13 — B14 follow-up (user): unused things are deleted, not moved with a note; files never narrate history or past reasons (that goes in commit messages). Deleted `grid_rbpf_headless.py` and the local 2D-Grid-SLAM clone; rewrote change-log wording in `extended_kalman.py` ("used ...; now ...") and removed history notes from E02, E03 and datasets.yaml. The private checker now also flags change-log wording. Rule added to `.claude/CLAUDE.md`.
 - 2026-09-13 — **M3 done** (user asked to complete it). Final check: a copy with exactly the files git would push, without `docs/`, `.claude/` and `.vscode/`, in a new container: `make container setup test status quick report` all succeeded (vendors + datasets fetched, gmapping built, 108 tests, quick run of all experiments, report built with placeholders for the not-yet-run experiments). Next: user tests on the server, then M4 (`make run E=E01` ... `E=E04`).
+- 2026-09-13 — Project tested on the shared server (ai-server-01): Docker there has no buildx, so `make container` fails on `RUN --mount`; image built with the old builder from a temporary copy of the Dockerfile without cache mounts. `make setup`, `make test` (108 passed), `make quick` (all experiments, E05 skipped as expected) and `make report` all worked. Harmless warnings: user id 1003 has no home in the container (matplotlib/fontconfig cache). Open: whether the Dockerfile should also build without BuildKit.
+- 2026-09-13 — Background runs added (user: experiments must keep running after VS Code is closed). `tools/background.sh` + `make start/start-all/running/log/stop`: run in its own session (setsid -f), one at a time, output in `.build/logs/`. devcontainer.json: `shutdownAction: none`, `--init`, `--restart unless-stopped`; same in `make container`. Tested: run survives closing the starting terminal; stop lets the current run finish (forced after 30 s), nothing partial saved; start again skips finished runs; make log ends with the run. Bugs found while testing and fixed: runs started with `&` ignored Ctrl+C and so ignored stop; `tail --pid` hung on zombie processes (container without --init). 108 tests pass.
+- 2026-09-14 — C0 done (user: the same experiment may run several times; a run broken by a bug or wrong setup is replaced, a deliberate parameter change is a new experiment with its own data and parameters; user chose numbers over "repeat"). Results now in `results/<E>/<NNN>/` with `parameters.yaml` + `info.json`; `current.txt` picks what the report and show_results use. `make redo` / `make new NOTE=...` / `make use N=...`; `--rerun` removed. A plain run refuses to continue when the YAML parameters differ from the current set, or when runs remain and stored runs used other code (`--code-change-ok` overrides); quick sets are redone automatically. Seeds are not a parameter (more seeds continue the same set). Analysis uses each set's stored parameters; compare accepts sets; report macros take an optional number (`\experimenttable[002]{...}`, catchfile). 116 project tests + 8 private tests pass; make quick, new/redo/use/compare and report preview checked by hand. Decisions: 3-digit folder names; redo deletes without asking.
+- 2026-09-14 — C1–C4 done: E01–E04 run as result set 001 (note "first full run") on ai-server-01 in the background, 16 jobs, 1,120 runs, no errors; milestone checker passes for all six configs. Waiting at C5. Points for the review: (1) automatic findings compare best vs worst across different particle counts in two-factor experiments (e.g. Multinomial N=1000 vs Stratified N=50), not meaningful; (2) EKPF gets worse with more particles in E03 localization (RMSE 0.67 at N=50 -> 0.98 at N=1000, ESS/N ~0.19), against the hypothesis, to investigate before accepting; (3) mean NEES identical (1.68e7) for every resampling rule in E02, i.e. dominated by the steps before the first resample: decide median NEES or skip early steps; (4) multinomial/stratified runtime reflects the upstream Python loops, not the schemes.
+- 2026-09-14 — C5 review, first part (user: do the recommendations). (1) EKPF worse with more particles was a bug: position differences in the prior/proposal densities were not wrapped to the cyclic world, so a sample moved across the edge by validate got an arbitrarily large weight (step-0 collapse onto a particle ~8 m away, more likely with more particles). Fixed as correction 6 (switchable with upstream_bugs), regression test via the importance-sampling identity from a uniform start (fails by >10^4 without the fix). EKPF now improves with N (RMSE 0.59 -> 0.25) but keeps ESS/N ~0.2; resetting the per-particle covariance each step (linearized optimal proposal) gave 0.12 m and ESS/N 0.58 in a side test, a different algorithm, not adopted. (2) Findings compare like with like: two-setting experiments compare the technique within each value of the other setting. (3) Reports use median NEES (nees_median) instead of the mean. (4) Report E01 text explains that resampler runtimes reflect the upstream O(N^2) multinomial/stratified code. All six E01-E04 sets redone as 001 with the fixed code (1,120 runs, no errors). 118 project tests + 8 private tests pass; report builds.
+- 2026-09-14 — M9 "Wider coverage" added (user: the coverage gaps of E01–E04 get their own milestone). Tasks W1–W6: E07 when to resample in FastSLAM, E08 resamplers with FastSLAM 2.0, W3/W4 decisions on SLAM proposals and crossed combinations (run or state as limitations), report entries, checkpoint. Numbered M9 so the existing M6–M8 keep their numbers; to be done after M5 and before the report text. Checker has an m9 check.
+- 2026-09-14 — Milestones renumbered by importance (user): M6 is now Wider coverage (was M9), M7 Report stays, M8 is the optional gmapping check (was M6), M9 the blog article (was M8). Earlier log lines use the old numbers.
+- 2026-09-14 — Plan restructured into phases (user: every phase or sprint must end in a complete result and report, so the project does not get stuck adding milestones and miss the deadline). Phase 1 = M0-M4 + report v1; Phase 2 resample-move (E05); Phase 3 wider coverage (E07-E10); Phase 4 gmapping (E06); Later: HMC, unscented proposal, covariance-reset EKPF, blog. Rule saved in .claude/CLAUDE.md and memory. Checker reports by phase (P1-P4) and shows only the current phase by default; the report only includes the current phase's experiments (E05/E06 subsections removed until their phase).
+- 2026-09-14 — Report v1 written (R2-R7): introduction, DBN background with Rao-Blackwellization and the d-separation argument, particle filter theory, method (worlds, implementation, metrics, statistics), results for E01-E04 with every number and clear/within verdict taken from the stored summaries, discussion with limitations, conclusion, appendix of upstream corrections; author Mohammed as in the proposal. 17 pages, no TODO, builds from a clean .build/report. Results cleaned of conversational text: the "first full run" note removed from info.json and summaries, analysis status notes rephrased as facts, baseline logs regenerated (old project path). Tables and figures made readable: one column per varied setting, wrapped LaTeX headers, tables scaled only when wider than the page, log axis for NEES, trace legends outside the plot, E02 drops the always-zero collapses metric. 118 project tests + 8 private tests pass; P1 checker automatic checks pass. Waiting at C5 and R8 (user review); Phase 1 closes after that.
+- 2026-09-14 — **Phase 1 closed** (approved by user): E01-E04 results and report v1 (report/report.pdf, 18 pages, clickable references) are the deliverable if the deadline comes first. User commits and pushes. Next, only if time allows: Phase 2 (resample-move).

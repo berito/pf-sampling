@@ -70,8 +70,10 @@ You only need Docker (and `make`, which most systems have).
    make results
    ```
 
-   Results go to `results/<experiment>/` (tables, figures and `summary.md`). If a run is stopped, run the
-   same command again: finished runs are kept and skipped.
+   Results go to a numbered set, `results/<experiment>/001/` (tables, figures and `summary.md`). If a run is
+   stopped, run the same command again: finished runs are kept and skipped. For long runs, `make start E=E02`
+   runs it in the background, so it keeps going after VS Code or the terminal is closed (`make log` to follow,
+   `make stop`). After changing a parameter, `make new E=E02` keeps the earlier set; see the experiments guide.
 
 `make` on its own lists every command. Each one is also written out in full in the guides, if you prefer
 not to use make:

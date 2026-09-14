@@ -132,3 +132,14 @@ Every major step taken on the project, one line each, oldest first. Details are 
 - Replaced typographic characters (long dashes, arrows, maths symbols) with plain text in the project files.
 - Removed wording that tells the history of the work from project files; that belongs in commit messages.
 - Tested a clean copy without the private folders in a new container: setup, tests, quick run and report all worked. M3 done.
+- Tested the project on the shared server: image built without buildx from a temporary Dockerfile copy; setup, 108 tests, quick run of every experiment and the report all worked.
+- Added background runs (make start / running / log / stop) that keep going after VS Code or the terminal is closed; VS Code no longer stops the container when closed; tested on the shared server.
+- Added numbered result sets per experiment (redo replaces a wrong set, new keeps the earlier one, use picks the one the report shows); tests, guides and the report macros updated.
+- Ran E01–E04 in the background on the shared server (1,120 runs, result set 001); all reports built; waiting for the results review.
+- Fixed the extended Kalman proposal at the world's edge, made findings compare like with like, switched reports to median NEES, explained resampler runtimes in the report, and redid E01–E04.
+- Added milestone M9 (wider coverage: when to resample in FastSLAM, resamplers with FastSLAM 2.0, SLAM proposals, crossed combinations) to the plan and the milestone checker.
+- Renumbered the milestones by importance: resample-move, wider coverage, report, optional gmapping check, blog.
+- Restructured the plan into phases that each end in a complete report; saved the rule; the milestone checker reports by phase; later-phase experiments removed from the report until their phase.
+- Wrote the full report (v1) for E01-E04, removed conversational text from the stored results, and made the report tables and figures readable; Phase 1 is waiting for the user's review.
+- Added a clickable DOI, arXiv or URL link to every reference in the report (each checked against its paper) and cited PythonRobotics.
+- Phase 1 closed after the user's review; report v1 is the deliverable.

@@ -1,0 +1,9 @@
+filter: mcl
+world: {}
+fixed:
+  proposal: motion_model
+  resampler: systematic
+  trigger: {name: ess_threshold, threshold: 0.5}
+vary:
+  n_particles: [10, 25, 50, 100, 250, 500, 1000, 2500]
+seeds: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19]

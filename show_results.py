@@ -31,14 +31,32 @@ def shown(path):
 NOT_EXPERIMENTS = {"quick", "baseline", "comparisons"}
 
 
+def current_number(experiment_folder):
+    """The number in current.txt, else the highest numbered result set, else None."""
+    stored = sorted(p.name for p in experiment_folder.iterdir() if p.is_dir() and p.name.isdigit() and len(p.name) == 3)
+    pointer = experiment_folder / "current.txt"
+    if pointer.exists() and pointer.read_text().strip() in stored:
+        return pointer.read_text().strip()
+    return stored[-1] if stored else None
+
+
 def find_summaries(folder):
+    """The summary of each experiment's current numbered result set."""
     summaries = []
-    for path in sorted(folder.glob("*/summary.json")):
-        if path.parent.name not in NOT_EXPERIMENTS:
+    for experiment_folder in sorted(p for p in folder.glob("*") if p.is_dir() and p.name not in NOT_EXPERIMENTS):
+        number = current_number(experiment_folder)
+        path = experiment_folder / str(number) / "summary.json"
+        if number and path.exists():
             summary = json.loads(path.read_text())
             summary["folder"] = path.parent
+            summary["numbers"] = sum(1 for p in experiment_folder.iterdir() if p.is_dir() and p.name.isdigit())
             summaries.append(summary)
     return summaries
+
+
+def number_line(summary):
+    """e.g. 'Result set 002 (2 stored)'"""
+    return f"Result set {summary.get('number', '?')} ({summary.get('numbers', 1)} stored)"
 
 
 # --- terminal ------------------------------------------------------------------------------
@@ -52,6 +70,7 @@ def text_table(header, rows):
 def print_summary(summary):
     print("=" * 100)
     print(summary["title"])
+    print(number_line(summary))
     print("=" * 100)
     print(f"Question: {summary['question']}\n")
     print(text_table(summary["table"]["header"], summary["table"]["rows"]))
@@ -99,6 +118,7 @@ def experiment_section(summary):
     rows = "".join("<tr>" + "".join(f"<td>{e(c)}</td>" for c in row) + "</tr>" for row in summary["table"]["rows"])
     parts = [
         f'<h2 id="{e(summary["id"])}">{e(summary["title"])}</h2>',
+        f'<p class="muted">{e(number_line(summary))}</p>',
         f'<p class="question">{e(summary["question"])}</p>',
     ]
     if summary.get("hypothesis"):

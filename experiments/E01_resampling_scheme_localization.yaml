@@ -19,5 +19,5 @@ quick:
   seeds: 3
   vary: {n_particles: [50, 200]}
 report:
-  metrics: [position_rmse, ate, unique_after_resampling, ess_mean, nees_mean, runtime_per_step_ms]
+  metrics: [position_rmse, ate, unique_after_resampling, ess_mean, nees_median, runtime_per_step_ms]
   traces: []               # 12 variants: the per-step plots would be unreadable

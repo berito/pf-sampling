@@ -61,6 +61,29 @@ def test_propagate_noise_has_the_vendor_spread(poses):
     assert np.isclose(np.std(moved[:, 2]), 0.2, rtol=0.03)
 
 
+def test_extended_kalman_weights_are_unbiased_across_the_world_edge():
+    """Importance sampling identity from a uniform start: the mean weight equals the mean likelihood under the
+    Gaussian prior the weights assume. Many EKF updates move particles across the edge of the cyclic world."""
+    world = localization_world(0)
+    m = LocalizationModel(world.size, world.landmarks, (0.1, 0.2), (0.4, 0.3))
+    control, measurement = world.controls[0], world.measurements[0]
+    samples = 200_000
+    np.random.seed(3)
+    previous = m.initial_uniform(samples)
+    predicted = previous.copy()
+    predicted[:, 2] += control[1]
+    predicted[:, 0] += control[0] * np.cos(predicted[:, 2])
+    predicted[:, 1] += control[0] * np.sin(predicted[:, 2])
+    prior = m.validate(predicted + np.random.randn(samples, 3) * [0.1, 0.1, 0.2])
+    expected = np.logaddexp.reduce(m.log_likelihood(prior, measurement)) - np.log(samples)
+
+    proposal = registry.create("proposal", "extended_kalman")
+    particles = ParticleSet(previous, np.full(samples, 1.0 / samples))
+    proposal.initialize(particles, m)
+    _, log_weights = proposal.propose(particles, control, measurement, m, None)
+    assert np.logaddexp.reduce(log_weights) == pytest.approx(expected, abs=0.3)
+
+
 def test_extended_kalman_step_matches_vendor_with_upstream_bugs(monkeypatch):
     """Run one vendor EKPF update and our copy on the same particles, with sampling replaced by the mean."""
     np.random.seed(3)

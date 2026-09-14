@@ -1,12 +1,13 @@
 """Private project-management check for Claude (not part of the shared project; .claude/ can be untracked as a whole).
 
-    docker exec pf-sampling-dev python .claude/tools/check_milestones.py            all milestones
-    docker exec pf-sampling-dev python .claude/tools/check_milestones.py M3 M4      only these
+    docker exec pf-sampling-dev python .claude/tools/check_milestones.py            the current phase (the first not done)
+    docker exec pf-sampling-dev python .claude/tools/check_milestones.py P1 P2      these phases
+    docker exec pf-sampling-dev python .claude/tools/check_milestones.py all        every phase
     docker exec pf-sampling-dev python .claude/tools/check_milestones.py --fast     skip test suite, pipeline run, report build
 
-For each milestone in docs/project/TASKS.md it checks the "done when" condition automatically and prints what is
-missing and the shareable command that fixes it. Reviews by the user are listed as "review" and don't count.
-Exit code 0 when every checked milestone is done.
+For each phase in docs/project/TASKS.md it checks every step's "done when" condition automatically and prints what is
+missing and the shareable command that fixes it. A phase ends with a complete report covering its experiments.
+Reviews by the user are listed as "review" and don't count. Exit code 0 when every checked phase is done.
 
 It may use the project code; the project code must never refer to this file.
 """
@@ -76,24 +77,31 @@ def experiment_check(path):
     if problems:
         return Check(TODO, name, "cannot run yet: " + "; ".join(problems), f"make run E={name}   (after fixing the above)")
 
-    folder = R.experiment_dir(name)
+    folder = R.current_dir(R.experiment_dir(name))
+    if folder is None:
+        return Check(TODO, name, f"0 of {len(list(experiment.runs()))} runs stored (no result set yet)",
+                     f"make start E={name}   (runs in the background)")
+    changes = R.parameter_changes(folder, experiment)
+    if changes:
+        return Check(TODO, name, f"parameters changed since {folder.name}: " + "; ".join(changes),
+                     f"make redo E={name}  (set {folder.name} was wrong)   or   make new E={name} NOTE=\"...\"  (on purpose)")
     expected = {spec.run_id for spec in experiment.runs()}
     stored = {p.stem for p in (folder / "runs").glob("*.json")} & expected
     if len(stored) < len(expected):
-        started = f"{len(stored)} of {len(expected)} runs stored"
-        return Check(TODO, name, started, f"make run E={name}   (continues where it stopped)")
+        started = f"{len(stored)} of {len(expected)} runs stored in {folder.name}"
+        return Check(TODO, name, started, f"make start E={name}   (continues where it stopped)")
 
     current = R.code_fingerprint()
     stale = sum(json.loads(R.run_path(folder, run_id).read_text())["code"] != current for run_id in stored)
     if stale:
-        return Check(TODO, name, f"{stale} of {len(expected)} runs were made with older code",
-                     f"make run E={name} ARGS=--rerun   (or keep them if the change cannot affect the numbers)")
+        return Check(TODO, name, f"{stale} of {len(expected)} runs in {folder.name} were made with older code",
+                     f"make redo E={name}   (or keep them if the change cannot affect the numbers)")
 
     summary = folder / "summary.json"
     if not summary.exists() or json.loads(summary.read_text()).get("runs") != len(expected):
         return Check(TODO, name, "all runs stored, but tables and figures are not up to date",
                      f"make analyse E={name}")
-    return Check(OK, name, f"{len(expected)} runs, report in results/{name}/")
+    return Check(OK, name, f"{len(expected)} runs, report in results/{name}/{folder.name}/")
 
 
 def experiments_done(prefix):
@@ -197,7 +205,7 @@ def pipeline_check():
         config = temporary / "M3_check.yaml"
         config.write_text(PIPELINE_CONFIG)
         env = {**os.environ, "PFEXP_RESULTS": str(temporary / "results")}
-        folder = temporary / "results" / "M3_check"
+        folder = temporary / "results" / "M3_check" / "001"
 
         first = run([sys.executable, "-m", "pfexp.run", str(config), "--jobs", "2"], env=env)
         if first.returncode != 0:
@@ -235,8 +243,6 @@ def m3(fast):
     checks.append(Check(OK, "every experiment config loads (full and --quick)") if not broken
                   else Check(TODO, "every experiment config loads", "\n".join(broken), "fix the config"))
     checks.append(Check(SKIPPED, "pipeline end to end", "--fast") if fast else pipeline_check())
-    checks.append(Check(REVIEW, "checkpoint: review the pipeline and a quick run",
-                        fix="make quick   then open results/quick/report.html"))
     return checks
 
 
@@ -256,34 +262,48 @@ def m5(fast):
               "write it (see pfexp/README.md, 'Adding a sampling technique'), then: make test"),
     ]
     checks += experiments_done("E05")
-    checks.append(Check(REVIEW, "compare with the M4 results",
+    checks.append(Check(REVIEW, "compare with the E01 results",
                         fix="make compare DIRS=\"results/E01_resampling_scheme_localization results/E05_resample_move\""))
     return checks
 
 
-def m6(fast):
+def gmapping_experiment(fast):
     return experiments_done("E06")
 
 
 TODO_MARK = "\\todo{"
 
 
-def m7(fast):
+def coverage(fast):
+    checks = experiments_done("E07") + experiments_done("E08")
+    checks.append(Check(REVIEW, "decide: measurement-aware proposals for FastSLAM (run E09 or state as a limitation)"))
+    checks.append(Check(REVIEW, "decide: crossed combinations (run E10 or state as a limitation)"))
+    checks.append(Check(REVIEW, "checkpoint: review the coverage experiments", fix="make results"))
+    return checks
+
+
+def report_check(prefixes, fast):
+    """The report covers these experiments (by config prefix), has no TODO left, and builds."""
     sections = sorted((PROJECT / "report").glob("**/*.tex"))
     text = {path: path.read_text() for path in sections}
     checks = []
 
-    included = {m for body in text.values() for m in re.findall(r"\\experiment(?:table|figure)\{([^}]+)\}", body)}
-    configs = {p.stem for p in (PROJECT / "experiments").glob("*.yaml")}
+    included = {m for path, body in text.items() if path.name != "macros.tex"
+                for m in re.findall(r"\\experiment(?:table|figure)(?:\[[^\]]*\])?\{([^}]+)\}", body)}
+    configs = {p.stem for prefix in prefixes for p in experiment_configs(prefix)}
+    all_configs = {p.stem for p in (PROJECT / "experiments").glob("*.yaml")}
     not_in_report = sorted(configs - included)
-    no_config = sorted(included - configs)
-    no_results = sorted(i for i in included & configs if not (R.RESULTS / i / "tables" / "summary.tex").exists())
+    no_config = sorted(included - all_configs)
+    later = sorted(included & (all_configs - configs))
+    no_results = sorted(i for i in included & configs
+                        if not (R.current_dir(R.RESULTS / i) or R.RESULTS / i / "none").joinpath("tables", "summary.tex").exists())
     detail = "; ".join(filter(None, [
         f"not in the report: {', '.join(not_in_report)}" if not_in_report else "",
         f"in the report but no config: {', '.join(no_config)}" if no_config else "",
         f"no results yet: {', '.join(no_results)}" if no_results else "",
+        f"from a later phase (leave out until then): {', '.join(later)}" if later else "",
     ]))
-    checks.append(Check(TODO if detail else OK, "every experiment's table and figure are in the report", detail,
+    checks.append(Check(TODO if detail else OK, f"the report has the tables and figures of {', '.join(prefixes)}", detail,
                         "add \\experimenttable / \\experimentfigure in report/sections/05_experiments.tex, "
                         "or run the missing experiments" if detail else ""))
 
@@ -297,45 +317,75 @@ def m7(fast):
     else:
         checks.append(command_succeeds("report builds (report/report.pdf)", ["make", "-C", "report"],
                                        "make report   (the LaTeX log is in .build/report/main.log)"))
-    checks.append(Check(REVIEW, "checkpoint: read the PDF with your supervisor or teammates", fix="open report/report.pdf"))
+    checks.append(Check(REVIEW, "checkpoint: read the PDF together; the phase ends here", fix="open report/report.pdf"))
     return checks
 
 
-MILESTONES = {
-    "M0": ("Setup complete", m0),
-    "M1": ("Shareable project structure", m1),
-    "M2": ("Existing code experiment-ready (plug-ins)", m2),
-    "M3": ("Experiment pipeline + analysis ready", m3),
-    "M4": ("Core experiments done (E01–E04)", m4),
-    "M5": ("New sampler added: resample-move (E05)", m5),
-    "M6": ("(optional) Real-data check with gmapping (E06)", m6),
-    "M7": ("Report (LaTeX)", m7),
+def step(title, checks):
+    """Prefix a step's checks with its title, so a phase reads as a list of steps."""
+    for check in checks:
+        check.what = f"{title}: {check.what}"
+    return checks
+
+
+PHASE1 = ("E01", "E02", "E03", "E04")
+PHASE2 = PHASE1 + ("E05",)
+PHASE3 = PHASE2 + ("E07", "E08")
+PHASE4 = PHASE3 + ("E06",)
+
+
+def phase1(fast):
+    return (step("setup", m0(fast)) + step("sharing", m1(fast)) + step("plug-ins", m2(fast))
+            + step("pipeline", m3(fast)) + step("experiments", m4(fast)) + step("report v1", report_check(PHASE1, fast)))
+
+
+def phase2(fast):
+    return step("resample-move", m5(fast)) + step("report v2", report_check(PHASE2, fast))
+
+
+def phase3(fast):
+    return step("coverage", coverage(fast)) + step("report v3", report_check(PHASE3, fast))
+
+
+def phase4(fast):
+    return step("gmapping", gmapping_experiment(fast)) + step("report v4", report_check(PHASE4, fast))
+
+
+PHASES = {
+    "P1": ("Core study: E01-E04 and report v1", phase1),
+    "P2": ("Resample-move: E05 and report v2 (if time)", phase2),
+    "P3": ("Wider coverage: E07-E10 and report v3 (if time)", phase3),
+    "P4": ("Real data: gmapping E06 and report v4 (if time)", phase4),
 }
 
 
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("milestones", nargs="*", help="e.g. M3 M4 (default: all)")
+    ap.add_argument("phases", nargs="*", help="e.g. P1 P2, or all (default: the current phase)")
     ap.add_argument("--fast", action="store_true", help="skip the test suite, the pipeline run and the report build")
     args = ap.parse_args(argv)
 
-    selected = [m.upper() for m in args.milestones] or list(MILESTONES)
-    unknown = [m for m in selected if m not in MILESTONES]
+    selected = [p.upper() for p in args.phases]
+    if selected == ["ALL"]:
+        selected = list(PHASES)
+    unknown = [p for p in selected if p not in PHASES]
     if unknown:
-        ap.error(f"unknown milestone {unknown}; choose from {', '.join(MILESTONES)}")
+        ap.error(f"unknown phase {unknown}; choose from {', '.join(PHASES)} or all")
+    current_only = not selected
 
     next_steps, all_done = [], True
-    for key in selected:
-        title, checker = MILESTONES[key]
+    for key in (selected or list(PHASES)):
+        title, checker = PHASES[key]
         started = time.perf_counter()
         checks = checker(args.fast)
         automatic = [c for c in checks if c.status != REVIEW]
         done = all(c.status == OK for c in automatic)
         skipped = any(c.status == SKIPPED for c in automatic)
+        waiting = [c for c in checks if c.status == REVIEW]
         all_done &= done
-        waiting = any(c.status == REVIEW for c in checks)
-        state = ("DONE, waiting for review" if waiting else "DONE") if done else ("NOT CHECKED FULLY" if skipped and all(c.status in (OK, SKIPPED) for c in automatic)
-                                     else f"{sum(c.status == OK for c in automatic)}/{len(automatic)} done")
+        state = ("DONE, waiting for review" if waiting else "DONE") if done else (
+            "NOT CHECKED FULLY" if skipped and all(c.status in (OK, SKIPPED) for c in automatic)
+            else f"{sum(c.status == OK for c in automatic)}/{len(automatic)} done")
         print(f"\n{key}  {title}  —  {state}  ({time.perf_counter() - started:.0f}s)")
         for check in checks:
             print(f"   {SYMBOLS[check.status]} {check.what}" + (f"  ({check.detail})" if check.detail and "\n" not in check.detail else ""))
@@ -345,6 +395,9 @@ def main(argv=None):
                 print(f"       → {check.fix}")
                 if check.status == TODO:
                     next_steps.append(f"{key}: {check.fix}")
+        if current_only and not (done and not waiting):
+            print("\n(later phases start only when this one is closed; see them with: all)")
+            break
 
     print()
     if next_steps:

@@ -17,6 +17,8 @@
     }
   },
   "postCreateCommand": "bash .devcontainer/postcreate.sh",
+  "shutdownAction": "none",
+  "runArgs": ["--init", "--restart", "unless-stopped"],
   "remoteUser": "vscode",
   "containerEnv": {
     "PFEXP_HOST": "${localEnv:HOSTNAME}${localEnv:COMPUTERNAME}"

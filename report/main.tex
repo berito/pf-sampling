@@ -12,22 +12,35 @@
 \usepackage{algorithm}
 \usepackage{algpseudocode}
 \usepackage{xcolor}
-\usepackage[style=numeric,sorting=nyt,backend=biber]{biblatex}
+\usepackage{catchfile}
+\usepackage[style=numeric,sorting=nyt,backend=biber,doi=true,eprint=true,url=true,isbn=true,urldate=long]{biblatex}
 \addbibresource{references.bib}
-\usepackage[hidelinks]{hyperref}
+\usepackage[colorlinks=true, linkcolor=black, citecolor=black, urlcolor=blue]{hyperref}
 \usepackage[capitalise]{cleveref}
 
 \input{macros}
 
 \title{Particle Filters for Inference in Continuous State Space}
-\author{\todo{Author name}}
-\date{\todo{Date}}
+\author{Mohammed}
+\date{September 2026}
 
 \begin{document}
 \maketitle
 
 \begin{abstract}
-\todo{Abstract: the question, what was compared, the main findings in two or three sentences.}
+The particle filter carries inference on a graphical model from discrete variables to continuous, non-Gaussian
+ones by representing each belief with weighted samples. How well it works depends on its sampling choices: how
+new particles are proposed, how and when they are resampled, and how many there are. This report writes robot
+localization and simultaneous localization and mapping (SLAM) as dynamic Bayesian networks, derives the particle
+filter and FastSLAM, the Rao-Blackwellized particle filter that samples the robot's trajectory and estimates each
+landmark analytically, as approximate inference on them, and compares these choices in controlled experiments
+over 20 simulated worlds each. The four common resampling schemes give the same accuracy in localization, while
+systematic resampling keeps the most distinct particles; resampling adaptively, when the effective sample size
+or the largest weight signals degeneracy, is as accurate as resampling at every step, with low thresholds resampling at
+only a third to a half of the steps, and never resampling triples the error. Measurement-informed proposals keep a larger effective sample
+size: the auxiliary particle filter is the most accurate localization filter from 100 particles on, and
+FastSLAM 2.0 gives a better map than FastSLAM 1.0 with 5 to 10 particles. Beyond about 500 particles the error
+of the bootstrap filter improves only slowly while the runtime keeps growing.
 \end{abstract}
 
 \input{sections/01_introduction}
@@ -41,6 +54,6 @@
 \appendix
 \input{sections/A_upstream_code}
 
-\printbibliography
+{\sloppy\printbibliography}
 
 \end{document}

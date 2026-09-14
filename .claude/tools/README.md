@@ -16,9 +16,9 @@ Every tool or working file that Claude creates must be listed in this file.
 |---|---|---|
 | `.claude/CLAUDE.md` | Rules and useful commands for Claude sessions, loaded automatically | Claude |
 | `.claude/tools/README.md` | This file | Claude and you |
-| `.claude/tools/check_milestones.py` | Checks each milestone's "done when" condition in TASKS.md and prints the next command. Also checks that no product file mentions the working material or uses typographic characters. | Claude (you can run it too) |
+| `.claude/tools/check_milestones.py` | Checks each phase's steps in TASKS.md (by default only the current phase) and prints the next command. Also checks that no product file mentions the working material or uses typographic characters. | Claude (you can run it too) |
 | `.claude/tools/test_check_milestones.py` | Tests for the checker | Claude |
-| `docs/project/TASKS.md` | Milestones, tasks with status, checkpoints, decision log | Claude and you |
+| `docs/project/TASKS.md` | Phases, tasks with status, checkpoints, the Later list, decision log | Claude and you |
 | `docs/project/ACTIONS.md` | One plain line per major action taken | You (a record), Claude |
 | `docs/project/BRIEF.md`, `PLAN.md`, `PROPOSAL.md`, proposal PDF | Project brief, plan and course proposal | You, Claude |
 | `docs/study/`, `docs/papers/` | Your study notes, the upstream code review (`VENDOR_REVIEW.md`), paper PDFs | You (learning), Claude (background) |
@@ -27,8 +27,8 @@ Every tool or working file that Claude creates must be listed in this file.
 Run the tools inside the container:
 
 ```bash
-docker exec pf-sampling-dev python .claude/tools/check_milestones.py            # all milestones
-docker exec pf-sampling-dev python .claude/tools/check_milestones.py M4 --fast   # one milestone, quick
+docker exec pf-sampling-dev python .claude/tools/check_milestones.py            # the current phase
+docker exec pf-sampling-dev python .claude/tools/check_milestones.py all --fast  # every phase, quick
 docker exec pf-sampling-dev python -m pytest -q .claude/tools                     # the checker's tests
 ```
 
@@ -49,7 +49,7 @@ Everything else in the repository: `README.md`, `THIRD_PARTY.md`, `Makefile`, `s
 ## Sharing the product without the working material
 
 1. Check that nothing in the product refers to the working material:
-   `docker exec pf-sampling-dev python .claude/tools/check_milestones.py M1` ("shared files do not refer to …").
+   `docker exec pf-sampling-dev python .claude/tools/check_milestones.py P1` ("shared files do not refer to …").
 2. Make a copy without it (working files, generated and downloaded folders left out):
    ```bash
    rsync -a --exclude docs --exclude .claude --exclude .vscode --exclude datasets --exclude vendor \
