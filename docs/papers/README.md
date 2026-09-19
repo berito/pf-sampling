@@ -4,9 +4,9 @@ Which sampling technique can actually be experimented on, which paper defines it
 codebase in [`../../vendor/`](../../vendor/) already implements it. Everything in the "code" column was
 verified to build and run inside the devcontainer.
 
-All 43 PDFs for this project live here. `study/` keeps the written analysis
-([`PAPERS.md`](../study/PAPERS.md) is still the annotated reading index) but no longer holds
-any PDFs.
+The 43 PDFs are kept outside this repository, in the research repo at `research/mini_research/particle_filters/`, in the folders
+below; every **Location** in this file is relative to that folder. The papers are other people's
+work, so they are cited here, not redistributed. `PAPERS.md` in that folder is the annotated reading index.
 
 | Folder | Papers | Contents |
 |---|---:|---|
@@ -16,11 +16,11 @@ any PDFs.
 | `advanced_sampling/` | 7 | auxiliary PF, KLD-sampling, HMC, diversity recovery, PF on manifolds |
 | `rbpf_slam/` | 4 | DP-SLAM 1 and 2, MegaParticles MCL, PF-SLAM for vehicle localisation |
 | `differentiable_pf/` | 11 | the learned/differentiable-PF line, including Corenflos OT-resampling (stretch goal) |
-| `visual_pf_slam/` | 9 | §H of `study/PAPERS.md` — monocular + IMU visual PF-SLAM (stretch goal) |
+| `visual_pf_slam/` | 9 | §H of `PAPERS.md` — monocular + IMU visual PF-SLAM (stretch goal) |
 
 The sections below map the first four folders onto the code and the experiments. `rbpf_slam/`,
 `differentiable_pf/` and `visual_pf_slam/` are background and stretch-goal reading; they are
-indexed in [`../study/PAPERS.md`](../study/PAPERS.md).
+indexed in `PAPERS.md` in `research/mini_research/particle_filters/`.
 
 ---
 

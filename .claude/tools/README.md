@@ -21,7 +21,7 @@ Every tool or working file that Claude creates must be listed in this file.
 | `docs/project/TASKS.md` | Phases, tasks with status, checkpoints, the Later list, decision log | Claude and you |
 | `docs/project/ACTIONS.md` | One plain line per major action taken | You (a record), Claude |
 | `docs/project/BRIEF.md`, `PLAN.md`, `PROPOSAL.md`, proposal PDF | Project brief, plan and course proposal | You, Claude |
-| `docs/study/`, `docs/papers/` | Your study notes, the upstream code review (`VENDOR_REVIEW.md`), paper PDFs | You (learning), Claude (background) |
+| `docs/project/VENDOR_REVIEW.md`, `docs/papers/` | The upstream code review, the paper map (PDFs and study notes in the research repo) | You (learning), Claude (background) |
 | `~/.claude/projects/…/memory/` (outside the repo) | Claude's memory across sessions, if any | Claude |
 
 Run the tools inside the container:

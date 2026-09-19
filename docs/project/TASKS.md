@@ -64,8 +64,7 @@ pf-sampling/
 │  ── PRIVATE (tracked for now, removed before sharing) ──
 └─ docs/
    ├─ project/          BRIEF.md · PLAN.md · PROPOSAL.md · proposal PDF · TASKS.md
-   ├─ study/            MECHANISM · SAMPLING · PAPERS · CODE · notes/
-   ├─ papers/           PDFs + technique↔paper map
+   ├─ papers/           technique↔paper map (PDFs in the research repo)
    └─ report/           the write-up (later)
 ```
 
@@ -106,7 +105,7 @@ pf-sampling/
 ### M2 — Existing code experiment-ready, as plug-ins (`pfexp/`)
 - [x] A1 Baseline: run each vendor demo headless once (from `results/baseline/`, not `vendor/`)
       (`tools/run_vendor_baseline.py`: SIR, EKPF, resampling stats, FastSLAM 1/2; seeded, reproducible byte-for-byte;
-      upstream bugs found → `docs/study/VENDOR_REVIEW.md`)
+      upstream bugs found → `docs/project/VENDOR_REVIEW.md`)
 - [x] A2 Package skeleton + registry (register / look up by name) + the four technique interfaces
       (resampler · when to resample · proposal · move)
 - [x] A3 Common run log format (per step + per run), shared by every filter

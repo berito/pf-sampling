@@ -59,7 +59,7 @@ Trajectory error (**ATE / RMSE**) · **effective sample size (ESS)** & degenerac
 A lightweight PF/RBPF testbed + **sampling-technique experiments** + report. **No Gazebo or real robot needed** — a synthetic/simple 2D sim (à la the `jelfring` code) is enough. Build on existing code, don't write from scratch.
 - **C1 — Minimal continuous-space PF** (MCL) on synthetic 2D range-bearing data. Sampling → weighting → resampling, visualized.
 - **C2 — RBPF SLAM (FastSLAM 1.0)** — add the map (the Rao-Blackwellized factorization).
-- **C3 — Sampling experiments** ⭐ *(the graded heart — see [`../study/SAMPLING.md`](../study/SAMPLING.md)):* compare the 4 resampling schemes + adaptive (ESS); proposal upgrades (motion → measurement-informed); ≥1 advanced sampler. Measure **ESS · degeneracy · RMSE · #particles · runtime**.
+- **C3 — Sampling experiments** ⭐ *(the graded heart — see `SAMPLING.md` in `research/mini_research/particle_filters/`):* compare the 4 resampling schemes + adaptive (ESS); proposal upgrades (motion → measurement-informed); ≥1 advanced sampler. Measure **ESS · degeneracy · RMSE · #particles · runtime**.
 - **C4 — Report** ⭐ — DBN framing + Rao-Blackwellization derivation + discrete→continuous bridge + experiment results/plots. **This is the graded deliverable.**
 
 ### 🟡 STRETCH — experiment extensions (only after 🟢 CORE is shipped)
@@ -67,7 +67,7 @@ A lightweight PF/RBPF testbed + **sampling-technique experiments** + report. **N
 
 ### 🟡 STRETCH — demo stages (progressive realism, in order)
 - **S1 — Gazebo + LiDAR:** build a **campus-like Gazebo world**, a **wheeled robot with a LiDAR**, run **FastSLAM / gmapping and variants** in sim.
-- **S2 — Gazebo + camera:** *same world*, **swap LiDAR → camera**, do the **same SLAM** (visual PF-SLAM — see [`../study/PAPERS.md`](../study/PAPERS.md) §H).
+- **S2 — Gazebo + camera:** *same world*, **swap LiDAR → camera**, do the **same SLAM** (visual PF-SLAM — see `PAPERS.md` §H in `research/mini_research/particle_filters/`).
 - **S3 — Real demo (final stage):** **real mobile camera + IMU** (phone) — monocular-inertial PF-SLAM of the actual indoor square.
 
 > **Discipline:** finish 🟢 **CORE (experiments + report) before touching 🟡 STRETCH.** The stretch stages are impressive but **ungraded** — they must not eat the core. Each stretch stage (S1→S2→S3) is independently shippable; stop whenever time runs out. S1–S3 also feed the `simulation_ros2_engineer` skill track (Gazebo/ROS2) — double duty.
@@ -78,8 +78,8 @@ The full layout (shareable code · fetched/generated · private `docs/`) is kept
 ```
 docs/
   project/   ← this brief · PLAN · PROPOSAL · proposal PDF · TASKS (milestones + task tracker)
-  study/     ← ✅ literature + understanding (MECHANISM · PAPERS · SAMPLING · CODE)
-  papers/    ← ✅ the paper corpus (43 PDFs) + the technique↔code↔experiment map
+  project/VENDOR_REVIEW.md ← ✅ review of the upstream filter code (study notes: research/mini_research/particle_filters/)
+  papers/    ← ✅ the technique↔paper↔code↔experiment map (the 43 PDFs: research/mini_research/particle_filters/)
   report/    ← 🟢 CORE: the report (the graded deliverable)
 ```
 *(🟡 STRETCH: a `sim/` folder for the Gazebo world + robot, if it happens.)*
