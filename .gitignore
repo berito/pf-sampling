@@ -4,15 +4,13 @@ __pycache__/
 # results/ is tracked on purpose: experiments continue across computers (runs already done are skipped).
 # results/quick/ holds the small --quick reruns, which anyone can regenerate in a minute.
 results/quick/
-.vscode/browse.vc.db*
 
-# --- fetched, not ours: recreated exactly by tools/fetch_vendors.py ---
+# --- fetched, not ours: recreated exactly by the tools/ scripts ---
 # (each upstream repo has its own .git, so git could only store a broken pointer to it)
 vendor/
+datasets/
 
-# --- for sharing later: uncomment when the code is shared ---
-# Fetched, not ours: recreated by tools/fetch_datasets.py.
-# datasets/
-# Private material, not part of the shared code.
-# docs/
-# .claude/
+# --- one computer's settings, and material that is not part of the shared code ---
+.vscode/
+docs/
+.claude/
