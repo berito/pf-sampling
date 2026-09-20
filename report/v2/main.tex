@@ -8,6 +8,15 @@
 \usepackage{amsmath,amssymb,bm}
 \usepackage{graphicx}
 \usepackage{booktabs}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\usepackage{tikz}
+% the colours pfexp/style.py gives each technique, so a scheme looks the same here as in every result figure
+\definecolor{schemeMultinomial}{HTML}{2A78D6}
+\definecolor{schemeResidual}{HTML}{EB6834}
+\definecolor{schemeStratified}{HTML}{1BAF7A}
+\definecolor{schemeSystematic}{HTML}{EDA100}
+\definecolor{particleFill}{HTML}{E4E3DF}
 \usepackage{siunitx}
 \usepackage{xcolor}
 \usepackage{catchfile}
@@ -29,7 +38,7 @@
 \input{macros}
 
 \title{Sampling in Particle-Filter Localization and SLAM}
-\author{Mohammed}
+\author{Mohammed \\ \normalsize GSR/5161/16}
 \date{September 2026}
 
 \begin{document}
@@ -61,9 +70,6 @@ sets a ceiling on what can be learned.
 \input{sections/02_problem}
 \input{sections/03_experiments}
 \input{sections/04_discussion}
-
-\appendix
-\input{sections/A_upstream_code}
 
 \small\sloppy\printbibliography[title=References]
 

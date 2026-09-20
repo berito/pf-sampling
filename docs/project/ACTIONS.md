@@ -161,3 +161,6 @@ Every major step taken on the project, one line each, oldest first. Details are 
 - Split the report into versions: v1 keeps the earlier shape, v2 is written from the agreed plan.
 - Cut report v2 to twelve pages: shorter background, fewer floats, a single-paragraph appendix.
 - Report v2 reads as a project report: summary instead of abstract, IEEE references, unnumbered subsections, belief and proposal defined where first used.
+- Report v2 narrowed to the two resampling choices, with the filter as pseudocode and each technique explained.
+- Added a diagram of the four resampling schemes drawing from the same weights.
+- Wrote a self-contained notebook with the code for the three experiments the report covers.

@@ -16,27 +16,59 @@ world, the trajectory and the random seed stay fixed. The filters themselves are
 implementations: the localization filters and resampling schemes of Elfring et al.\ \cite{elfring2021particle},
 and FastSLAM 1.0 from PythonRobotics \cite{sakai2018pythonrobotics}.
 
-Two of the four are the subject of this report:
+Two of the four are the subject of this report, lines~6 and~5 of \cref{alg:pf}. The other two are held fixed so
+that they cannot confound the comparison: the proposal is always the motion model, which draws from the prior,
+and the number of particles is fixed within each comparison.
+
+\paragraph{The resampling scheme} decides how the $N$ new indices are drawn from the weights. All four are
+unbiased, in that a particle of weight $\w^{(i)}$ is expected to be copied $N\w^{(i)}$ times; they differ in how
+much that count varies around its expectation, and therefore in how many distinct particles survive
+\cite{douc2005comparison,hol2006resampling}. Each is drawn below taking $N = 6$ draws from the same six weights,
+in the colour it keeps in every result figure; a particle is copied once for each tick that lands on it.
+
+\newcommand{\strip}[1]{%
+  \begin{center}\begin{tikzpicture}[x=9cm, y=1cm]
+    \foreach \a/\b/\n in {0/0.30/1, 0.30/0.55/2, 0.55/0.75/3, 0.75/0.87/4, 0.87/0.95/5, 0.95/1.0/6} {
+      \draw[fill=particleFill, draw=black!45] (\a,0.12) rectangle (\b,0.58);
+      \node[font=\tiny] at ({(\a+\b)/2},0.35) {\n};
+    }
+    #1
+  \end{tikzpicture}\end{center}}
+
+\emph{Multinomial} takes $N$ independent draws from the weights, so the number of copies of a particle is
+binomial. This has the largest variance of the four: the draws clump, and particles are missed.
+\strip{\foreach \x in {0.067, 0.103, 0.155, 0.236, 0.396, 0.402}
+        \draw[very thick, schemeMultinomial] (\x,-0.05) -- (\x,0.75);}
+
+\emph{Residual} first takes $\lfloor N \w^{(i)} \rfloor$ copies of each particle outright (solid), then fills the
+remaining places multinomially from the leftover weight (dashed). Removing the whole part removes most of the
+randomness.
+\strip{\foreach \x in {0.15, 0.42, 0.65} \draw[very thick, schemeResidual] (\x,-0.05) -- (\x,0.75);
+       \foreach \x in {0.08, 0.34, 0.80}
+        \draw[very thick, schemeResidual, densely dashed] (\x,-0.05) -- (\x,0.75);}
+
+\emph{Stratified} cuts $[0,1)$ into $N$ equal strata (dotted) and draws one uniform number inside each, forcing
+the draws to spread over the cumulative weights.
+\strip{\foreach \j in {1,2,3,4,5} \draw[schemeStratified!55, densely dotted] ({\j/6},-0.09) -- ({\j/6},0.79);
+       \foreach \x in {0.153, 0.3, 0.461, 0.537, 0.756, 0.879}
+        \draw[very thick, schemeStratified] (\x,-0.05) -- (\x,0.75);}
+
+\emph{Systematic} draws a single uniform $u \in [0, 1/N)$ and takes the $N$ positions $u + (j-1)/N$. One random
+number gives the lowest variance of the four, at the cost of correlating the draws.
+\strip{\foreach \j in {0,1,2,3,4,5}
+        \draw[very thick, schemeSystematic] ({0.07+\j/6},-0.05) -- ({0.07+\j/6},0.75);}
+
+\paragraph{When to resample} decides whether line~6 runs at all on a given step. Resampling fights degeneracy but
+discards particles, so a rule has to balance the two.
 \begin{itemize}
-  \item \emph{the resampling scheme}: multinomial, residual, stratified and systematic resampling
-        \cite{douc2005comparison,hol2006resampling}, which differ in the variance they add when the set is
-        redrawn;
-  \item \emph{when to resample}: at every step; never; when the effective sample size falls below a threshold
-        (0.2, 0.5 or 0.8 of $N$); or when the largest weight rises above one (0.1, 0.2 or 0.5).
+  \item \emph{Every step}, and \emph{never}, as the two extremes.
+  \item \emph{An ESS threshold}: resample when the effective sample size falls below a fraction of $N$, tested at
+        0.2, 0.5 and 0.8. This measures degeneracy directly.
+  \item \emph{A largest-weight threshold}: resample when one particle's weight rises above 0.1, 0.2 or 0.5. This
+        reacts to a single particle taking over, which the ESS notices more slowly.
 \end{itemize}
-The other two are held fixed so that they cannot confound the comparison. The proposal is always the motion
-model, which draws from the prior, and the number of particles is fixed within each comparison.
 
 \paragraph{Parameter learning.} The noise values are parameters of the network's two conditional distributions,
 and the weights the filter already computes estimate the marginal likelihood of the observations under them,
 so they can be estimated from a recorded run instead of assumed. This asks not how well
-the filter infers under a given model, but which parts of the model the data can determine at all. What is
-tested:
-\begin{itemize}
-  \item whether the four noise parameters can be recovered by maximizing \eqref{eq:mle}, and how the recovered
-        values compare with the values the world used;
-  \item which of them the data identify: whether the likelihood has a maximum, and whether independent recordings
-        agree on where it is;
-  \item what the inference must be capable of first: how the estimate depends on the number of particles, on the
-        resampling scheme, and on whether the filter tracks or localizes from scratch.
-\end{itemize}
+the filter infers under a given model, but which parts of the model the data can determine at all.

@@ -8,19 +8,14 @@ A measurement-informed proposal also costs more per particle, so the fair compar
 than at equal particle count, and there its advantage is much smaller. Adaptive resampling buys no accuracy in
 these worlds but saves resampling steps at no cost.
 
-\paragraph{What limits learning.} Two limits, of different kinds. The first is the inference: the objective is
+\paragraph{What limits learning.} Two limits, of different kinds. The inference is one: the objective is
 estimated by the same weights that do the filtering, so a filter that has not found the robot reports which
-setting lets it work rather than which setting generated the data, and a filter with too few particles reports
-noise. Inference quality is a precondition for learning, not merely something learning improves. The second is the
-data: the motion parameters are perfectly well defined and undetermined by 30 steps of this world, and become
-determined only when the trajectory is long enough for their effect to show against the measurement noise. No
-amount of computation removes that, and agreement between independent recordings separates the two cases cheaply. The one-sided shape of the likelihood also explains a common practice: since understating a noise level is
-penalized far more heavily than overstating it, values set by hand are rationally kept large, as the settings
-inherited from the upstream code are.
-
-\paragraph{On reusing implementations.} Reused code has to be checked function by function before it is
-compared: four errors in the upstream code would each have biased a comparison, one of them leaving resampled
-particles sharing their state, which would have masked exactly the diversity effect measured here.
+setting lets it work rather than which setting generated the data, and one with too few particles reports noise.
+Inference quality is a precondition for learning, not something learning improves. The data is the other: the
+motion parameters are well defined and simply undetermined by 30 steps of this world, which no amount of
+computation repairs. Agreement between independent recordings separates the two cases cheaply. The one-sided
+shape of the likelihood also explains why noise set by hand is rationally kept large, as the inherited settings
+are.
 
 \paragraph{Limitations.} The worlds are small and simulated, with known correspondences; real sensors, unknown
 data association and larger maps would make degeneracy and proposal quality more important. Each experiment

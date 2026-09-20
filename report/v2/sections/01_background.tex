@@ -1,29 +1,23 @@
 \section{Background}\label{sec:background}
 
-A robot that must know where it is has two unreliable sources of information: the controls it was given, which are
-corrupted by wheel slip, and the measurements it takes of its surroundings, which are corrupted by sensor noise.
+A robot that must know where it is has two unreliable sources of information: the controls it was given, which
+are corrupted by wheel slip, and its measurements of the surroundings, which are corrupted by sensor noise.
 Combining them into an estimate of the pose, with an honest account of its uncertainty, is probabilistic
-localization; doing it while building the map is SLAM \cite{thrun2005probabilistic}. This section gives what is
-needed to follow the rest of the report: the network the problem is written on, how inference is done on it
-exactly and how it has to be approximated, what makes that approximation affordable in SLAM, and finally what it
-means to learn the model's numbers rather than supply them.
+localization; doing it while building the map is SLAM \cite{thrun2005probabilistic}.
 
-\subsection{Localization and SLAM as a dynamic Bayesian network}\label{sec:dbn}
-
-In localization the map is known and the robot estimates its pose from the controls it was given and its
-observations of known landmarks. In SLAM the map is unknown, and the robot estimates the map and its own trajectory at the same time.
+\subsection{The problem as a graphical model}\label{sec:dbn}
 
 Both are naturally written as a dynamic Bayesian network \cite[ch.~6 and 15]{koller2009probabilistic}. The pose
-$\x_t = (x_t, y_t, \theta_t)$ depends on the previous pose and the control $\uu_t$ through the motion model
-$p(\x_t \mid \x_{t-1}, \uu_t)$; each observation $\z_t$ is conditioned on the pose from which it was taken and on
-the map $\m$ through the measurement model $p(\z_t \mid \x_t, \m)$ (\cref{fig:dbn}), so
+$\x_t$ depends on the previous pose and the control $\uu_t$ through the motion model, and each observation $\z_t$
+is conditioned on the pose it was taken from and on the map $\m$ through the measurement model
+(\cref{fig:dbn}), so
 \begin{equation}
   p(\x_{0:T}, \m, \z_{1:T} \mid \uu_{1:T}) = p(\x_0)\, p(\m) \prod_{t=1}^{T} p(\x_t \mid \x_{t-1}, \uu_t)\,
   p(\z_t \mid \x_t, \m).
   \label{eq:joint}
 \end{equation}
-Controls and observations are observed; the trajectory is latent, and in SLAM the map is latent as well.
-Correspondences are known throughout, so each observation carries the identity of the landmark it measures.
+Controls and observations are observed; the trajectory is latent, and in SLAM the map as well. Correspondences
+are known, so each observation carries the identity of the landmark it measures.
 
 \begin{figure}[!ht]
   \centering
@@ -47,104 +41,89 @@ Correspondences are known throughout, so each observation carries the identity o
   \label{fig:dbn}
 \end{figure}
 
-\subsection{Exact inference on the network: the Bayes filter}\label{sec:bayesfilter}
-
-Estimation on this network is the Bayes filter, the forward pass of inference on the network written out over
-time. What it computes is the \emph{belief}, the distribution over the current pose given everything observed so
-far. Because $\x_t$ separates past from future, the belief satisfies
+What the filter computes is the \emph{belief}, the distribution over the current pose given everything observed
+so far. Because $\x_t$ separates past from future it satisfies the Bayes filter recursion, a prediction through
+the motion model followed by a correction with the new observation \cite{thrun2005probabilistic}:
 \begin{equation}
   p(\x_t \mid \z_{1:t}, \uu_{1:t}) \;\propto\; p(\z_t \mid \x_t)
-  \int p(\x_t \mid \x_{t-1}, \uu_t)\, p(\x_{t-1} \mid \z_{1:t-1}, \uu_{1:t-1})\, d\x_{t-1},
+  \int p(\x_t \mid \x_{t-1}, \uu_t)\, p(\x_{t-1} \mid \z_{1:t-1}, \uu_{1:t-1})\, d\x_{t-1}.
   \label{eq:bayes-filter}
 \end{equation}
-a prediction through the motion model followed by a correction with the new observation
-\cite{thrun2005probabilistic}.
+The state is continuous, so that prediction is an integral. It is tractable in two cases: a discrete state space,
+where it is a finite sum, and a linear model with Gaussian noise, where the belief stays Gaussian and the
+recursion is the Kalman filter. Range and bearing measurements are nonlinear in the pose, and under global
+uncertainty the belief is multimodal, so neither applies and no closed form exists.
 
-The state is continuous, so the belief is a density and the prediction is an integral. That integral is tractable
-in two cases: with a discrete state space it is a finite sum, and \eqref{eq:bayes-filter} is the forward algorithm
-of a hidden Markov model; with a linear model and Gaussian noise the belief stays Gaussian and the recursion is
-the Kalman filter. Range and bearing measurements are nonlinear in the pose, and under global uncertainty the
-belief is multimodal, so neither applies and no closed form exists.
+\subsection{The particle filter}\label{sec:pf}
 
-\subsection{Approximate inference: the particle filter}\label{sec:pf}
+Where the integral cannot be carried out it is replaced by samples. The distribution the samples are drawn from
+is the \emph{proposal}; drawing a pose from the motion model and weighting it by $p(\z_t \mid \x_t)$ is
+likelihood weighting applied to one time slice, with the prior as the proposal
+\cite[ch.~12]{koller2009probabilistic}, and carrying the weighted set forward makes it sequential
+\cite{gordon1993novel,arulampalam2002tutorial}.
 
-Where the integral cannot be carried out it is replaced by samples. The distribution the samples are drawn from is
-the \emph{proposal}. Drawing a pose from the motion model and weighting it by $p(\z_t \mid \x_t)$ is likelihood
-weighting applied to one slice, with the prior as the proposal \cite[ch.~12]{koller2009probabilistic}; carrying
-the weighted set forward to the next slice makes it sequential \cite{gordon1993novel,arulampalam2002tutorial}. The belief after step $t$ is $N$ particles
-$\x_t^{(i)}$ with normalized weights $\w_t^{(i)}$.
+One ingredient has to be added. Over time the weights become products of more and more terms, so they concentrate
+on a single particle and the set stops representing the belief; how far this has gone is measured by the
+effective sample size $\mathrm{ESS} = 1/\sum_i (\w^{(i)})^2$. Resampling, which replaces the set by $N$ draws
+from itself, prevents it, and has no counterpart in the exact algorithm. It costs something in return: drawing
+with replacement duplicates the heaviest particles and discards the rest, so the number of distinct particles
+falls. \Cref{alg:pf} shows where each decision sits. Lines~5 and~6 are the subject of this report.
 
-One ingredient has to be added. Over time the weights become products of more and more terms, so
-they concentrate on a single particle and the set stops representing the belief; how far this has gone is measured
-by the effective sample size $\mathrm{ESS} = 1/\sum_i (\w^{(i)})^2$. Resampling, which replaces the set by $N$
-draws from itself, prevents it, and has no counterpart in the exact algorithm. It costs something in return:
-drawing with replacement duplicates the heaviest particles and discards the rest, so the number of distinct
-particles falls. A filter therefore has four things to decide: the proposal, when to resample, how to
-resample, and how many particles to carry. The middle two are the subject of this report.
+\begin{algorithm}[!ht]
+\caption{One step of the particle filter. Lines 5 and 6 are what this report varies.}\label{alg:pf}
+\begin{algorithmic}[1]
+\Require particles $\{\x_{t-1}^{(i)}, \w_{t-1}^{(i)}\}_{i=1}^{N}$, control $\uu_t$, observation $\z_t$
+\For{$i = 1 \dots N$}
+  \State $\x_t^{(i)} \sim q(\x \mid \x_{t-1}^{(i)}, \uu_t, \z_t)$
+         \Comment{\emph{proposal}; the motion model throughout this report}
+  \State $\tilde{\w}_t^{(i)} \gets \w_{t-1}^{(i)}\, p(\z_t \mid \x_t^{(i)})$
+         \Comment{weight by the new observation}
+\EndFor
+\State $\w_t^{(i)} \gets \tilde{\w}_t^{(i)} / \sum_j \tilde{\w}_t^{(j)}$
+\If{$\textsc{Trigger}(\w_t)$}                \Comment{\emph{when to resample}}
+  \State $\{a_i\} \gets \textsc{Resample}(\w_t)$   \Comment{\emph{which scheme}: $N$ indices drawn from $\w_t$}
+  \State $\x_t^{(i)} \gets \x_t^{(a_i)}$, \quad $\w_t^{(i)} \gets 1/N$
+\EndIf
+\State \Return $\{\x_t^{(i)}, \w_t^{(i)}\}$
+\end{algorithmic}
+\end{algorithm}
 
-\clearpage
 \subsection{Rao-Blackwellization and FastSLAM}\label{sec:rbpf}
 
-Applying the particle filter to SLAM raises a problem of dimension. The state is now the pose together with the
-map, so each particle would have to carry a complete map as well as a pose, and the state space gains two
-dimensions per landmark. Sampling that joint space directly is intractable: the number of particles needed to
-cover it grows exponentially with the number of landmarks.
-
-The structure of the network offers a way out. An observation of landmark $\m_k$ has exactly two parents: the
-pose it was taken from and $\m_k$ itself. Any path between two landmarks must therefore leave one of them
-through an observation and pass through that observation's pose, with both edges pointing away from the pose, and
-a known trajectory blocks every such path. The landmarks are d-separated given the trajectory and the
-observations \cite{koller2009probabilistic}, so the posterior splits:
+In SLAM the state is the pose together with the map, so the state space gains two dimensions per landmark and
+sampling it directly is intractable. The network offers a way out. An observation of landmark $\m_k$ has exactly
+two parents, the pose it was taken from and $\m_k$ itself, so any path between two landmarks must pass through
+an observation's pose with both edges pointing away from it; a known trajectory blocks every such path. The
+landmarks are d-separated given the trajectory \cite{koller2009probabilistic}, and the posterior splits:
 \begin{equation}
   p(\x_{1:t}, \m \mid \z_{1:t}, \uu_{1:t}) = p(\x_{1:t} \mid \z_{1:t}, \uu_{1:t})
   \prod_{k=1}^{K} p(\m_k \mid \x_{1:t}, \z_{1:t}).
   \label{eq:rao-blackwell}
 \end{equation}
-The first factor is a distribution over trajectories, the hard part. Each of the others is a small problem over
-one landmark's two coordinates, given that trajectory. Splitting a posterior in this way and solving the easy
-part exactly, rather than by sampling it, is Rao-Blackwellization \cite{doucet2000rao}, and FastSLAM is its
-application here: every particle carries one trajectory and one extended Kalman filter per landmark
+Sampling only the first factor and solving the rest exactly is Rao-Blackwellization \cite{doucet2000rao}, and
+FastSLAM applies it by giving every particle one trajectory and one extended Kalman filter per landmark
 \cite{montemerlo2002fastslam}. Only the trajectory is sampled, which is what makes particle-filter SLAM
 affordable.
 
-\subsection{Learning the parameters of the network}\label{sec:learning}
+\subsection{Learning the parameters}\label{sec:learning}
 
-Everything above takes the model as fully specified and asks how to compute with it. A graphical model raises a
-second question: where its numbers come from.
+The structure of \eqref{eq:joint} fixes which distributions appear, not the numbers inside them; write those as
+$\theta$. Estimating them from data is \emph{parameter} learning rather than structure learning, and here it is
+parameter learning \emph{with incomplete data} \cite[ch.~19]{koller2009probabilistic}, because the trajectory is
+latent. The network is also a template model, so the same conditional distribution is used at every slice and its
+parameters are tied across slices \cite[ch.~6]{koller2009probabilistic}: every step is evidence about the same
+$\theta$, and a longer trajectory is more data rather than more unknowns.
 
-The structure of \eqref{eq:joint} fixes which distributions appear, not the numbers inside them. Write those
-numbers as $\theta$. They may be supplied, or estimated from data; estimating them is \emph{parameter} learning,
-as opposed to structure learning, which asks for the graph itself.
-
-When some of the variables are never observed it is parameter learning \emph{with incomplete data}
-\cite[ch.~19]{koller2009probabilistic}, and that is the case here: the trajectory the observations depend on is
-latent, so the only data are the controls and the observations. A dynamic Bayesian network is also a template
-model, so the same conditional distribution is instantiated at every time slice and its parameters are tied
-across slices \cite[ch.~6]{koller2009probabilistic}. Every step is then evidence about the same $\theta$, and a
-longer trajectory is more data about it rather than more unknowns.
-
-The estimate is the $\theta$ under which the observations are most probable,
-\begin{equation}
-  \hat{\theta} = \arg\max_{\theta}\; \log p(\z_{1:T} \mid \uu_{1:T}, \theta), \qquad
-  p(\z_{1:T} \mid \uu_{1:T}, \theta) = \prod_{t=1}^{T} p(\z_t \mid \z_{1:t-1}, \uu_{1:t}, \theta).
-  \label{eq:mle}
-\end{equation}
-Its maximum is in the right place and not merely a convenient one: the average log likelihood tends to a term
-free of $\theta$ minus the Kullback-Leibler divergence between the true distribution and the model, and that
-divergence vanishes only where the two agree \cite[ch.~17]{koller2009probabilistic}.
-
-Each factor of \eqref{eq:mle} is again an integral with no closed form, and the particle filter estimates it as a
-by-product. With particles propagated through the motion model the unnormalized weight is $\tilde{\w}_t^{(i)} =
-\w_{t-1}^{(i)}\, p(\z_t \mid \x_t^{(i)}, \theta)$, and
+The estimate is the $\theta$ that makes the observations most probable, $\hat{\theta} = \arg\max_\theta \log
+p(\z_{1:T} \mid \uu_{1:T}, \theta)$, and that maximum is in the right place: the average log likelihood tends to
+a term free of $\theta$ minus the Kullback-Leibler divergence between the true distribution and the model, which
+vanishes only where the two agree \cite[ch.~17]{koller2009probabilistic}. The likelihood factorizes into one-step
+terms, each an integral with no closed form, but line~3 of \cref{alg:pf} already computes what is needed:
 \begin{equation}
   p(\z_t \mid \z_{1:t-1}, \uu_{1:t}, \theta) \;\approx\; \sum_{i=1}^{N} \tilde{\w}_t^{(i)},
   \label{eq:evidence}
 \end{equation}
-the sum the filter forms anyway in order to normalize \cite{doucet2011tutorial}.
-
-Two consequences follow, and both appear in the results. The estimate of the likelihood is unbiased, so the
-estimate of its logarithm is biased downwards, and the bias grows as the particle approximation degrades: the
-quality of the inference limits what can be learned. And the curvature of the expected score at $\theta^*$ is
-$T\,\mathcal{I}(\theta^*)$, with $\mathcal{I}$ the information one step carries, so the variance of the estimate
-is $1/(T\mathcal{I})$. A parameter the observations say little about leaves a flat likelihood: it is in the model
-and still not identifiable from the data, and because the parameters are tied, a longer trajectory sharpens it.
+the sum the filter forms in order to normalize \cite{doucet2011tutorial}. Two consequences follow. This estimate
+of the likelihood is unbiased, so the estimate of its logarithm is biased downwards, and the bias grows as the
+particle approximation degrades. And the curvature of the expected score is proportional to the number of steps,
+so a parameter the observations say little about leaves a flat likelihood, and a longer trajectory sharpens it.
