@@ -41,7 +41,9 @@ def test_log_likelihood_matches_vendor_without_fix(poses):
     theirs = np.array([vendor_pf.compute_likelihood(list(p), z, LANDMARKS) for p in poses])
     finite = theirs > 0
     assert finite.sum() > 100
-    assert np.allclose(np.exp(ours[finite]), theirs[finite], rtol=1e-9, atol=1e-300)
+    # upstream leaves out the normalizing constant, the same for every particle, so the ratios match
+    offset = ours[finite] - np.log(theirs[finite])
+    assert np.allclose(offset, offset[0], rtol=1e-9)
 
 
 def test_propagate_matches_vendor_without_noise(poses):

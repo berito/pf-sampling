@@ -1,70 +1,52 @@
-# Report
+# The report
 
-The LaTeX report. It reads each experiment's table and figure straight from `results/`, so rerunning an
-experiment updates the report without copying anything.
+The report is kept as numbered versions, each a self-contained folder with its own `main.tex`,
+`macros.tex` and `sections/`. Earlier versions stay buildable.
+
+| Version | Shape |
+|---|---|
+| `v1/` | Introduction, background, particle filters, method, experiments, discussion, conclusion |
+| `v2/` | Background, what the project addresses, experiments, discussion and conclusion |
+
+`v2` is the current one.
+
+## Build
 
 ```bash
-make report             # report/report.pdf, and a list of results that are still missing
-make report-preview     # the same with the quick results (results/quick/), in .build/report-preview/main.pdf
-grep -rn '\\todo{' report/main.tex report/sections   # parts still to write
-```
-Without make, inside the container: `make -C report` and `make -C report preview`.
-Build files go to `.build/report/` (safe to delete).
-
-## Files
-
-```
-main.tex                    title, abstract, the order of the sections
-macros.tex                  notation, \todo{...}, and the two commands that include results
-references.bib              bibliography
-sections/
-  01_introduction.tex       the question and why it matters
-  02_background.tex         SLAM as a dynamic Bayesian network, Rao-Blackwellization
-  03_particle_filters.tex   importance sampling, proposals, resampling, MCMC moves
-  04_method.tex             filters, worlds, implementation and upstream fixes, metrics
-  05_experiments.tex        one subsection per experiment
-  06_discussion.tex         what the results mean, limitations
-  07_conclusion.tex
-  A_upstream_code.tex       appendix: the upstream code and the bugs fixed
+make report              # the current version -> report/v2/report.pdf
+make report V=v1         # an earlier version -> report/v1/report.pdf
+make report-preview      # the current version with the quick results, not copied into report/
 ```
 
-Each section starts with comments listing what it should cover. Every unfinished part holds a red `\todo{...}`.
+Without make: `docker exec pf-sampling-dev make -C report [V=v1] [preview]`.
 
-## Including an experiment
+Build files go to `.build/report/<version>/` (safe to delete). The build prints a line for every
+table or figure whose experiment has not been run, and those appear in the PDF as red placeholders.
+
+## Writing
+
+Text lives in `<version>/sections/`. Tables and figures are never pasted in: they are read from
+`results/` at build time, so rerunning an experiment updates the report.
 
 ```latex
-\experimenttable{E02_when_to_resample}{When to resample.}
-\experimentfigure{E02_when_to_resample}{metrics}{When to resample: metrics per rule.}
-\experimentfigure{E02_when_to_resample}{trace_ess}{Effective sample size over time.}
+\experimenttable{E04_particle_count}{Caption.}
+\experimentfigure{E04_particle_count}{metrics}{Caption.}
+\experimentbest{E11_estimator_resampler}{Caption.}      % the value each recording picks on its own
 ```
 
-The first argument is the config name in `experiments/`. The figure name is a file in the result set's
-`figures/` folder without its extension: `metrics`, or `trace_<name>` for each trace listed in the config. Until
-the experiment has run, a red placeholder appears and `make report` lists it.
+The first argument is the experiment's config name in `experiments/`, without `.yaml`. Each
+experiment keeps numbered result sets and the report shows the one named in
+`results/<experiment>/current.txt`; pass a number to pin one, `\experimenttable[002]{...}{...}`.
 
-The report shows each experiment's current result set (`results/<experiment>/current.txt`; choose it with
-`make use E=E02 N=1`). To show a particular number, for example two sets side by side after a parameter change,
-give it first:
+Refer to a table or figure with `\cref{tab:<experiment>}`, `\cref{fig:<experiment>-<figure>}` or
+`\cref{tab:best-<experiment>}`.
 
-```latex
-\experimenttable[001]{E04_particle_count}{How many particles, systematic resampling.}
-\experimenttable[002]{E04_particle_count}{How many particles, stratified resampling.}
-```
+## Starting a new version
 
-The table shows every metric in the config's `report.metrics`. If a table is too wide for the page, list
-fewer metrics there and run `make analyse E=<experiment>`. Nothing needs to rerun.
-
-## Writing an experiment's subsection
-
-1. `make run E=E02`, then open `results/E02_when_to_resample/001/summary.md`. It has the question, the setup, the
-   table, and findings computed with 95% intervals (for example "the highest is ..., clearly beyond the
-   seed-to-seed spread").
-2. In `sections/05_experiments.tex`, replace the `\todo{...}` with: the question, the setup (what was fixed,
-   what varied, how many seeds), what the table and figure show, and whether the hypothesis held. Only claim a
-   difference that the summary calls clear.
-3. `make report` and read the PDF.
+Copy the current folder, rename it, and set `V` in `report/Makefile` to the new name.
 
 ## Before handing in
 
-- `grep -rn '\\todo{' report/main.tex report/sections` finds nothing, and `make report` lists no missing results.
-- Build from a clean copy: `rm -rf .build/report && make report`.
+- `grep -rn '\todo{' report/v2` finds nothing.
+- `make report` lists no missing results.
+- No undefined references in `.build/report/v2/main.log`.

@@ -7,7 +7,10 @@ Changes:
 - Vectorized over all particles (the upstream functions handle one particle at a time).
   Noise is drawn per particle in the same distributions, but in array order, so random draws
   don't line up one-to-one with the upstream loop.
-- Log likelihood instead of likelihood, to avoid underflow with many landmarks.
+- Log likelihood instead of likelihood, to avoid underflow with many landmarks, including the
+  normalizing constant of the Gaussian. Upstream leaves it out, which does not change the weights
+  because they are normalized, but it makes likelihoods computed with different `measurement_std`
+  incomparable, and the marginal likelihood then grows without bound as the assumed noise grows.
 - FIX (optional, on by default): the angle residual is wrapped to [-pi, pi). Upstream compares raw
   angles, so a small error across ±pi looks like ~2pi.
   `wrap_angle_residual=False` reproduces the upstream behaviour exactly.
@@ -44,6 +47,10 @@ class LocalizationModel:
         ])
         return self.validate(poses)
 
+    def initial_gaussian(self, n, mean, spread):
+        """Upstream: ParticleFilter.initialize_particles_gaussian, with one standard deviation per dimension."""
+        return self.validate(np.asarray(mean, dtype=float) + np.random.randn(n, 3) * np.asarray(spread, dtype=float))
+
     def propagate(self, poses, control, noise=True):
         """Rotate, then move forward along the new heading. Upstream: ParticleFilter.propagate_sample."""
         forward, turn = control
@@ -66,9 +73,11 @@ class LocalizationModel:
         return np.stack([np.hypot(dx, dy), np.arctan2(dy, dx)], axis=-1)
 
     def log_likelihood(self, poses, measurement):
-        """log p(z | pose) for each pose. Upstream: ParticleFilter.compute_likelihood (unnormalized Gaussian)."""
-        residual = self.expected_measurements(poses) - np.asarray(measurement)[None]
+        """log p(z | pose) for each pose. Upstream: ParticleFilter.compute_likelihood (unnormalized)."""
+        measurement = np.asarray(measurement)
+        residual = self.expected_measurements(poses) - measurement[None]
         if self.wrap_angle_residual:
             residual[..., 1] = wrap_angle(residual[..., 1])
         std = np.asarray(self.measurement_std)
-        return -0.5 * np.sum((residual / std) ** 2, axis=(1, 2))
+        normalizer = len(measurement) * (np.log(std).sum() + np.log(2 * np.pi))
+        return -0.5 * np.sum((residual / std) ** 2, axis=(1, 2)) - normalizer

@@ -143,3 +143,21 @@ Every major step taken on the project, one line each, oldest first. Details are 
 - Wrote the full report (v1) for E01-E04, removed conversational text from the stored results, and made the report tables and figures readable; Phase 1 is waiting for the user's review.
 - Added a clickable DOI, arXiv or URL link to every reference in the report (each checked against its paper) and cited PythonRobotics.
 - Phase 1 closed after the user's review; report v1 is the deliverable.
+- Sketched phase 5 (parameter learning: marginal likelihood from the particle weights, E11) in the plan.
+- Made parameter learning phase 2 (ahead of resample-move, wider coverage and gmapping) and updated the checker.
+- Recorded the PGM taxonomy the phase and the report use, and added the constant-noise check to phase 2.
+- Added the marginal likelihood of each step to the run log and a log_likelihood metric for bootstrap proposals.
+- Checked the estimator against an exact Kalman log-likelihood on a linear-Gaussian model.
+- Included the normalizing constant in the localization likelihood, which E01-E04 do not depend on.
+- Added a known-pose start and per-component noise settings to the localization filter.
+- Wrote the E11 experiments: learning each noise parameter, the start regime, and a longer trajectory.
+- Reported the value each recording picks on its own, so independent recordings can be compared.
+- Ran the estimator experiments: how the particle count and the resampling scheme change what can be learned.
+- Wrote report v2: how learning fits the course taxonomy, the E11 results, and what limits learning.
+- Listed the E11 experiments in the guide and showed the per-recording estimates in show_results.py.
+- Cut the E11 report floats to one per experiment and dropped the metrics the text does not discuss.
+- Shortened the automatic findings to one statement per group, with the metrics that show no difference named once.
+- Added why the likelihood maximum sits at the true value, what makes a parameter identifiable, and a check of the sweep against the closed form.
+- Split the report into versions: v1 keeps the earlier shape, v2 is written from the agreed plan.
+- Cut report v2 to twelve pages: shorter background, fewer floats, a single-paragraph appendix.
+- Report v2 reads as a project report: summary instead of abstract, IEEE references, unnumbered subsections, belief and proposal defined where first used.

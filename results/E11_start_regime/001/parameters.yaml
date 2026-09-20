@@ -1,0 +1,14 @@
+filter: mcl
+world: {}
+fixed:
+  proposal: motion_model
+  resampler: systematic
+  trigger: {name: ess_threshold, threshold: 0.5}
+  n_particles: 2000
+  bearing_std: 0.05
+  forward_std: 0.005
+  turn_std: 0.002
+vary:
+  start: [known, uniform]
+  range_std: [0.08, 0.107, 0.142, 0.19, 0.253, 0.337, 0.45, 0.6, 0.8]
+seeds: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19]

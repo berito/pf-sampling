@@ -125,7 +125,7 @@ compare:
 	$(IN) python -m pfexp.compare $(DIRS) $(ARGS)
 
 report:
-	$(IN) make -C report
+	$(IN) make -C report $(if $(V),V=$(V))
 
 report-preview:
-	$(IN) make -C report preview
+	$(IN) make -C report preview $(if $(V),V=$(V))

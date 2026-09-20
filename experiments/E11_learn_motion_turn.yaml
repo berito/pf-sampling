@@ -1,0 +1,29 @@
+# E11 (turn motion noise). Run: python -m pfexp.run experiments/E11_learn_motion_turn.yaml
+title: Can the motion noise be learned from the data? (turn)
+question: >
+  Sweeping the heading drift the filter assumes, does the marginal likelihood pick out the value the
+  world actually used (0.002 rad per step)?
+hypothesis: >
+  As for the forward slip, 30 steps of a nearly straight drive leave almost no trace of a drift this
+  small, so the likelihood is flat and the value cannot be read off it.
+filter: mcl
+world: {}
+fixed:
+  proposal: motion_model
+  resampler: systematic
+  trigger: {name: ess_threshold, threshold: 0.5}
+  n_particles: 2000
+  start: known
+  range_std: 0.2
+  bearing_std: 0.05
+  forward_std: 0.005
+vary:
+  turn_std: [0.0008, 0.00142, 0.00253, 0.0045, 0.008, 0.0142, 0.0253]
+seeds: 20
+quick:
+  seeds: 3
+  vary: {turn_std: [0.0008, 0.00253, 0.008]}
+report:
+  metrics: [log_likelihood, position_rmse]
+  traces: []
+  best: log_likelihood

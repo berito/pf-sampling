@@ -1,0 +1,31 @@
+# E11 (estimator vs particle count). Run: python -m pfexp.run experiments/E11_estimator_particles.yaml
+title: How many particles does learning need?
+question: >
+  The same sweep of the assumed range noise, run with different numbers of particles. How does the
+  number of particles change the log likelihood, how widely the estimate scatters between recordings,
+  and whether the true value (0.2 m) is picked out at all?
+hypothesis: >
+  The likelihood is estimated from the particle weights, so few particles make it noisy and biased
+  low, and the peak is buried in that noise. The estimate should settle on the true value and the
+  recordings should start to agree once there are enough particles to represent the belief.
+filter: mcl
+world: {}
+fixed:
+  proposal: motion_model
+  resampler: systematic
+  trigger: {name: ess_threshold, threshold: 0.5}
+  start: known
+  bearing_std: 0.05
+  forward_std: 0.005
+  turn_std: 0.002
+vary:
+  n_particles: [25, 100, 500, 2000]
+  range_std: [0.08, 0.107, 0.142, 0.19, 0.253, 0.337, 0.45, 0.6, 0.8]
+seeds: 20
+quick:
+  seeds: 3
+  vary: {n_particles: [25, 500], range_std: [0.08, 0.19, 0.45]}
+report:
+  metrics: [log_likelihood, position_rmse]
+  traces: []
+  best: log_likelihood

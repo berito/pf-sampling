@@ -1,0 +1,42 @@
+\section{Problem statement and objectives}\label{sec:problem}
+
+The structure of the model is fixed in advance by the robot's kinematics and its sensor geometry, so there is no
+structure to learn. What is left is the inference: the belief cannot be computed in closed form, so it is
+approximated by a set of samples, and the estimate is only as good as that set. How that set is proposed, weighted and resampled is the
+first thing measured here.
+
+The motion model and the measurement model each carry a noise level, and in practice these are almost always set
+by hand. In this project I estimate them instead, from the data the robot itself produced. That is the second
+thing measured here, and the weights the filter already computes are what make it possible.
+
+\paragraph{Sampling.} A filter must choose a proposal distribution, a rule for when to resample, a resampling
+scheme and a number of particles, and these are usually inherited from whatever implementation is at hand. I
+built a testbed in which they are interchangeable parts of one filter loop, so that one can be varied while the
+world, the trajectory and the random seed stay fixed. The filters themselves are existing open-source
+implementations: the localization filters and resampling schemes of Elfring et al.\ \cite{elfring2021particle},
+and FastSLAM 1.0 from PythonRobotics \cite{sakai2018pythonrobotics}.
+
+Two of the four are the subject of this report:
+\begin{itemize}
+  \item \emph{the resampling scheme}: multinomial, residual, stratified and systematic resampling
+        \cite{douc2005comparison,hol2006resampling}, which differ in the variance they add when the set is
+        redrawn;
+  \item \emph{when to resample}: at every step; never; when the effective sample size falls below a threshold
+        (0.2, 0.5 or 0.8 of $N$); or when the largest weight rises above one (0.1, 0.2 or 0.5).
+\end{itemize}
+The other two are held fixed so that they cannot confound the comparison. The proposal is always the motion
+model, which draws from the prior, and the number of particles is fixed within each comparison.
+
+\paragraph{Parameter learning.} The noise values are parameters of the network's two conditional distributions,
+and the weights the filter already computes estimate the marginal likelihood of the observations under them,
+so they can be estimated from a recorded run instead of assumed. This asks not how well
+the filter infers under a given model, but which parts of the model the data can determine at all. What is
+tested:
+\begin{itemize}
+  \item whether the four noise parameters can be recovered by maximizing \eqref{eq:mle}, and how the recovered
+        values compare with the values the world used;
+  \item which of them the data identify: whether the likelihood has a maximum, and whether independent recordings
+        agree on where it is;
+  \item what the inference must be capable of first: how the estimate depends on the number of particles, on the
+        resampling scheme, and on whether the filter tracks or localizes from scratch.
+\end{itemize}

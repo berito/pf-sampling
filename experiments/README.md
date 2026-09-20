@@ -26,6 +26,14 @@ make status E=E03   # only the experiments starting with E03
 | `E03_proposal_localization` | Motion model vs auxiliary PF vs extended Kalman PF | 240 | ~1 min |
 | `E03_proposal_slam` | FastSLAM 1.0 vs 2.0 | 160 | ~1 min |
 | `E04_particle_count` | How many particles are enough? | 160 | ~1 min |
+| `E11_learn_measurement_range` | Can the assumed range noise be learned from the run? | 180 | < 1 min |
+| `E11_learn_measurement_bearing` | The same for the bearing noise | 180 | < 1 min |
+| `E11_learn_motion_forward` | The same for the forward motion noise | 140 | < 1 min |
+| `E11_learn_motion_turn` | The same for the turn noise, over 30 steps | 140 | < 1 min |
+| `E11_learn_motion_turn_long` | The turn noise again, over 400 steps | 140 | < 1 min |
+| `E11_start_regime` | The range sweep from a known start and from the uniform start | 360 | < 1 min |
+| `E11_estimator_particles` | The range sweep with 25 to 2000 particles | 720 | < 1 min |
+| `E11_estimator_resampler` | The range sweep under the four resampling schemes | 720 | < 1 min |
 | `E05_resample_move` | Do MCMC moves after resampling help? *Needs the resample-move technique first (below).* | 120 | ~1 min |
 | `E06_gmapping_resampling` | gmapping's resampling threshold and number of particles on the real Intel log | 36 | ~10 min |
 
@@ -47,7 +55,8 @@ real time of every run.
    make run E=E01
    make run E=E02
    make run E=E03
-   make run E=E04          # or everything at once: make run-all
+   make run E=E04
+   make run E=E11          # or everything at once: make run-all
    ```
    `python -m pfexp.run experiments/E01_resampling_scheme_localization.yaml experiments/E01_resampling_scheme_slam.yaml`
 
@@ -139,7 +148,7 @@ logs, so it records the effective sample size, how often gmapping resampled, and
 
 ## Into the report
 
-See [report/README.md](../report/README.md). In short: write the text in `report/sections/`, then run
+See [report/README.md](../report/README.md). In short: write the text in `report/v2/sections/`, then run
 `make report`. It lists any experiment whose results are still missing.
 
 ## Running on several computers
@@ -198,7 +207,7 @@ report:
 Technique names are the file names in `pfexp/techniques/<kind>/`. Metric names are the keys each file in
 `pfexp/metrics/` returns (e.g. `position_rmse`, `ate`, `map_error_aligned`, `ess_mean`, `unique_after_resampling`,
 `resample_rate`, `nees_mean`, `runtime_per_step_ms`). Then add the experiment's table and figure to
-`report/sections/05_experiments.tex`.
+`report/v2/sections/03_experiments.tex`.
 
 ## When something goes wrong
 

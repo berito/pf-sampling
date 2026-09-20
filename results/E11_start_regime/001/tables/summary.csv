@@ -1,0 +1,19 @@
+variant,seeds,log_likelihood_mean,log_likelihood_std,position_rmse_mean,position_rmse_std
+"start: Known start, range_std: 0.08",20,-251.983,555.647,0.157082,0.153886
+"start: Known start, range_std: 0.107",20,99.1099,90.2538,0.0960994,0.0667544
+"start: Known start, range_std: 0.142",20,185.201,23.6768,0.0691715,0.0253296
+"start: Known start, range_std: 0.19",20,205.434,12.8745,0.0629212,0.0168797
+"start: Known start, range_std: 0.253",20,200.691,8.6802,0.0628541,0.0169296
+"start: Known start, range_std: 0.337",20,183.401,6.49252,0.0662853,0.0184348
+"start: Known start, range_std: 0.45",20,158.474,5.67299,0.0710838,0.0176205
+"start: Known start, range_std: 0.6",20,129.438,5.5932,0.0767907,0.0191167
+"start: Known start, range_std: 0.8",20,97.9801,5.65823,0.0824025,0.0203436
+"start: Uniform start, range_std: 0.08",20,-58995.2,47884.5,3.08991,1.50509
+"start: Uniform start, range_std: 0.107",20,-26816.9,21697.5,2.46392,1.31418
+"start: Uniform start, range_std: 0.142",20,-18197.8,16622.6,2.37057,1.49359
+"start: Uniform start, range_std: 0.19",20,-12473.3,11334.3,2.25043,1.45441
+"start: Uniform start, range_std: 0.253",20,-9724.03,8298.25,2.11781,1.31492
+"start: Uniform start, range_std: 0.337",20,-7022.63,6713.96,1.8097,1.09969
+"start: Uniform start, range_std: 0.45",20,-7307.36,6961.04,1.86766,1.24145
+"start: Uniform start, range_std: 0.6",20,-6130.62,6863.12,1.70344,1.27273
+"start: Uniform start, range_std: 0.8",20,-5200.89,6372.97,1.53258,1.1234

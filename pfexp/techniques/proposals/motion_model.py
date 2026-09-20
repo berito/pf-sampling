@@ -11,6 +11,7 @@ from pfexp.techniques.base import Proposal
 @register("proposal", "motion_model")
 class MotionModel(Proposal):
     filter = "mcl"
+    gives_marginal_likelihood = True
 
     def propose(self, particles, control, measurement, model, resampler):
         poses = model.propagate(particles.poses, control)

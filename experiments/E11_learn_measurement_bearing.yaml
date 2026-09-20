@@ -1,0 +1,29 @@
+# E11 (bearing noise). Run: python -m pfexp.run experiments/E11_learn_measurement_bearing.yaml
+title: Can the measurement noise be learned from the data? (bearing)
+question: >
+  The same question for the bearing sensor: does the marginal likelihood of the recorded measurements
+  peak at the bearing noise the world actually used (0.05 rad)?
+hypothesis: >
+  As for the range, the likelihood peaks at the true value, and more sharply, because every step
+  measures the bearing to all four landmarks.
+filter: mcl
+world: {}
+fixed:
+  proposal: motion_model
+  resampler: systematic
+  trigger: {name: ess_threshold, threshold: 0.5}
+  n_particles: 2000
+  start: known
+  range_std: 0.2
+  forward_std: 0.005
+  turn_std: 0.002
+vary:
+  bearing_std: [0.02, 0.0267, 0.0356, 0.0474, 0.0632, 0.0843, 0.1125, 0.15, 0.2]
+seeds: 20
+quick:
+  seeds: 3
+  vary: {bearing_std: [0.02, 0.0474, 0.1125]}
+report:
+  metrics: [log_likelihood, position_rmse]
+  traces: []
+  best: log_likelihood

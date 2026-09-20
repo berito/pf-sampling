@@ -7,7 +7,8 @@
 
 For each phase in docs/project/TASKS.md it checks every step's "done when" condition automatically and prints what is
 missing and the shareable command that fixes it. A phase ends with a complete report covering its experiments.
-Reviews by the user are listed as "review" and don't count. Exit code 0 when every checked phase is done.
+Reviews by the user are listed as "review" and don't count; a phase is closed when its row in the table in TASKS.md
+is ticked, and the default skips closed phases. Exit code 0 when every checked phase is done.
 
 It may use the project code; the project code must never refer to this file.
 """
@@ -35,6 +36,8 @@ try:
 except ImportError as missing:
     sys.exit(f"The checks need the project's Python libraries ({missing.name} is missing).\n"
              "Run it inside the container:  docker exec pf-sampling-dev python .claude/tools/check_milestones.py")
+
+REPORT_VERSION = "v2"   # the version of the report the current phase delivers
 
 OK, TODO, REVIEW, SKIPPED = "ok", "todo", "review", "skipped"
 SYMBOLS = {OK: "✔", TODO: "✘", REVIEW: "⏸", SKIPPED: "–"}
@@ -267,6 +270,25 @@ def m5(fast):
     return checks
 
 
+def learning(fast):
+    checks = []
+    has_metric = "log_likelihood" in registry.names("metric")
+    checks.append(Check(OK, "metric log_likelihood") if has_metric else
+                  Check(TODO, "metric log_likelihood", "no log_likelihood metric is registered",
+                        "add pfexp/metrics/log_likelihood.py; the run log needs the per-step log of the summed "
+                        "unnormalized weights, then: make test"))
+    tested = (PROJECT / "tests" / "test_log_likelihood.py").exists()
+    checks.append(Check(OK, "the metric is checked against an exact log-likelihood") if tested else
+                  Check(TODO, "the metric is checked against an exact log-likelihood",
+                        "tests/test_log_likelihood.py does not exist",
+                        "add a linear-Gaussian case whose Kalman log-likelihood is known in closed form, "
+                        "then: make test"))
+    checks += experiments_done("E11")
+    checks.append(Check(REVIEW, "checkpoint: review E11 (the maximum-likelihood noise against the true noise)",
+                        fix="make results"))
+    return checks
+
+
 def gmapping_experiment(fast):
     return experiments_done("E06")
 
@@ -282,14 +304,17 @@ def coverage(fast):
     return checks
 
 
-def report_check(prefixes, fast):
+def report_check(prefixes, fast, version=REPORT_VERSION):
     """The report covers these experiments (by config prefix), has no TODO left, and builds."""
-    sections = sorted((PROJECT / "report").glob("**/*.tex"))
+    sections = sorted((PROJECT / "report" / version).glob("**/*.tex"))
     text = {path: path.read_text() for path in sections}
     checks = []
 
+    # an experiment counts as shown when a float names it, or when the text says it is reported in words
     included = {m for path, body in text.items() if path.name != "macros.tex"
-                for m in re.findall(r"\\experiment(?:table|figure)(?:\[[^\]]*\])?\{([^}]+)\}", body)}
+                for m in re.findall(r"\\experiment(?:table|figure|best)(?:\[[^\]]*\])?\{([^}]+)\}", body)}
+    included |= {m for body in text.values()
+                 for m in re.findall(r"% reported in the text: (\S+)", body)}
     configs = {p.stem for prefix in prefixes for p in experiment_configs(prefix)}
     all_configs = {p.stem for p in (PROJECT / "experiments").glob("*.yaml")}
     not_in_report = sorted(configs - included)
@@ -304,7 +329,7 @@ def report_check(prefixes, fast):
         f"from a later phase (leave out until then): {', '.join(later)}" if later else "",
     ]))
     checks.append(Check(TODO if detail else OK, f"the report has the tables and figures of {', '.join(prefixes)}", detail,
-                        "add \\experimenttable / \\experimentfigure in report/sections/05_experiments.tex, "
+                        f"add \\experimenttable / \\experimentfigure in report/{version}/sections/, "
                         "or run the missing experiments" if detail else ""))
 
     todos = [f"{path.relative_to(PROJECT)}: {body.count(TODO_MARK)}"
@@ -315,9 +340,10 @@ def report_check(prefixes, fast):
     if fast:
         checks.append(Check(SKIPPED, "report builds", "--fast"))
     else:
-        checks.append(command_succeeds("report builds (report/report.pdf)", ["make", "-C", "report"],
-                                       "make report   (the LaTeX log is in .build/report/main.log)"))
-    checks.append(Check(REVIEW, "checkpoint: read the PDF together; the phase ends here", fix="open report/report.pdf"))
+        checks.append(command_succeeds(f"report builds (report/{version}/report.pdf)",
+                                       ["make", "-C", "report", f"V={version}"],
+                                       f"make report V={version}   (log: .build/report/{version}/main.log)"))
+    checks.append(Check(REVIEW, "checkpoint: read the PDF together; the phase ends here", fix="open report/v2/report.pdf"))
     return checks
 
 
@@ -328,35 +354,49 @@ def step(title, checks):
     return checks
 
 
-PHASE1 = ("E01", "E02", "E03", "E04")
-PHASE2 = PHASE1 + ("E05",)
-PHASE3 = PHASE2 + ("E07", "E08")
-PHASE4 = PHASE3 + ("E06",)
+PHASE1 = ("E01", "E02", "E03", "E04")     # report v1 presents all four
+PHASE2 = ("E01", "E02", "E11")            # report v2 studies two sampling choices, plus the learning experiments
+PHASE3 = PHASE2 + ("E05",)
+PHASE4 = PHASE3 + ("E07", "E08")
+PHASE5 = PHASE4 + ("E06",)
 
 
 def phase1(fast):
     return (step("setup", m0(fast)) + step("sharing", m1(fast)) + step("plug-ins", m2(fast))
-            + step("pipeline", m3(fast)) + step("experiments", m4(fast)) + step("report v1", report_check(PHASE1, fast)))
+            + step("pipeline", m3(fast)) + step("experiments", m4(fast))
+            + step("report v1", report_check(PHASE1, fast, version="v1")))
 
 
 def phase2(fast):
-    return step("resample-move", m5(fast)) + step("report v2", report_check(PHASE2, fast))
+    return step("learning", learning(fast)) + step("report v2", report_check(PHASE2, fast))
 
 
 def phase3(fast):
-    return step("coverage", coverage(fast)) + step("report v3", report_check(PHASE3, fast))
+    return step("resample-move", m5(fast)) + step("report v3", report_check(PHASE3, fast))
 
 
 def phase4(fast):
-    return step("gmapping", gmapping_experiment(fast)) + step("report v4", report_check(PHASE4, fast))
+    return step("coverage", coverage(fast)) + step("report v4", report_check(PHASE4, fast))
+
+
+def phase5(fast):
+    return step("gmapping", gmapping_experiment(fast)) + step("report v5", report_check(PHASE5, fast))
 
 
 PHASES = {
     "P1": ("Core study: E01-E04 and report v1", phase1),
-    "P2": ("Resample-move: E05 and report v2 (if time)", phase2),
-    "P3": ("Wider coverage: E07-E10 and report v3 (if time)", phase3),
-    "P4": ("Real data: gmapping E06 and report v4 (if time)", phase4),
+    "P2": ("Parameter learning: E11 and report v2", phase2),
+    "P3": ("Resample-move: E05 and report v3 (if time)", phase3),
+    "P4": ("Wider coverage: E07-E10 and report v4 (if time)", phase4),
+    "P5": ("Real data: gmapping E06 and report v5 (if time)", phase5),
 }
+
+
+def closed_phases():
+    """The phases ticked in the table at the top of TASKS.md. Only a person closes a phase."""
+    table = (PROJECT / "docs" / "project" / "TASKS.md").read_text()
+    rows = re.findall(r"^\|\s*\*\*(\d+)[^|]*\|[^|]*\|[^|]*\|\s*\[([ x])\]\s*\|\s*$", table, re.M)
+    return {f"P{number}" for number, status in rows if status == "x"}
 
 
 def main(argv=None):
@@ -372,10 +412,14 @@ def main(argv=None):
     if unknown:
         ap.error(f"unknown phase {unknown}; choose from {', '.join(PHASES)} or all")
     current_only = not selected
+    closed = closed_phases() if current_only else set()
 
     next_steps, all_done = [], True
     for key in (selected or list(PHASES)):
         title, checker = PHASES[key]
+        if key in closed:
+            print(f"\n{key}  {title}  —  closed in TASKS.md")
+            continue
         started = time.perf_counter()
         checks = checker(args.fast)
         automatic = [c for c in checks if c.status != REVIEW]

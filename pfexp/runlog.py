@@ -2,7 +2,8 @@
 
 Per step it stores the true pose, the estimate, the particle spread, and what the sampling did
 (ESS before resampling, whether it resampled, how many distinct particles survived, whether the
-weights collapsed). SLAM filters also store landmark estimates. Metrics only ever read this, so a
+weights collapsed, and the marginal likelihood of the step where the proposal provides it). SLAM
+filters also store landmark estimates. Metrics only ever read this, so a
 metric works for every filter.
 """
 import time
@@ -22,7 +23,7 @@ class RunLog:
     landmarks_est: list = field(default_factory=list)
 
     def record(self, *, true_pose, poses, weights, ess_before, resampled, unique_after, collapsed,
-               step_time, landmarks_est=None):
+               step_time, landmarks_est=None, log_evidence=float("nan")):
         """Record one filter step. `poses` and `weights` are the particles after the step."""
         mean = P.weighted_pose_mean(poses, weights)
         self.steps.append({
@@ -34,6 +35,7 @@ class RunLog:
             "unique_after": int(unique_after),
             "collapsed": bool(collapsed),
             "max_weight": float(np.max(weights)),
+            "log_evidence": float(log_evidence),
             "step_time": float(step_time),
         })
         if landmarks_est is not None:
@@ -71,6 +73,7 @@ class RunLog:
             "unique_after": self.array("unique_after"),
             "collapsed": self.array("collapsed"),
             "max_weight": self.array("max_weight"),
+            "log_evidence": self.array("log_evidence"),
             "step_time": self.array("step_time"),
         })
 

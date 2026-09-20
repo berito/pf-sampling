@@ -75,6 +75,10 @@ def print_summary(summary):
     print(f"Question: {summary['question']}\n")
     print(text_table(summary["table"]["header"], summary["table"]["rows"]))
     print("(mean ± standard deviation over seeds)\n")
+    if summary.get("best"):
+        print("Estimate from each recording on its own:")
+        print(text_table(summary["best"]["header"], summary["best"]["rows"]))
+        print()
     for finding in summary["findings"]:
         print(f"  - {finding}")
     for note in summary["notes"]:
@@ -126,6 +130,12 @@ def experiment_section(summary):
     parts.append('<ul class="setup muted">' + "".join(f"<li>{e(s)}</li>" for s in summary["setup"]) + "</ul>")
     parts.append(f'<div class="table"><table><tr>{header}</tr>{rows}</table></div>')
     parts.append('<p class="muted">Mean ± standard deviation over seeds.</p>')
+    if summary.get("best"):
+        best = summary["best"]
+        best_header = "".join(f"<th>{e(h)}</th>" for h in best["header"])
+        best_rows = "".join("<tr>" + "".join(f"<td>{e(c)}</td>" for c in row) + "</tr>" for row in best["rows"])
+        parts.append("<p><b>Estimate from each recording on its own</b></p>")
+        parts.append(f'<div class="table"><table><tr>{best_header}</tr>{best_rows}</table></div>')
     if summary["findings"]:
         parts.append("<p><b>Findings</b> <span class=muted>(computed automatically)</span></p>")
         parts.append('<ul class="findings">' + "".join(f"<li>{e(f)}</li>" for f in summary["findings"]) + "</ul>")

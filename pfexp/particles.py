@@ -52,6 +52,21 @@ def normalize_log(log_weights):
     return normalize(np.exp(shifted))
 
 
+def log_evidence_increment(log_weights):
+    """log of the sum of the unnormalized weights: the incremental marginal likelihood p(z_t | z_1:t-1).
+
+    It holds when a particle's unnormalized weight is its previous normalized weight times the likelihood
+    of the new measurement, which is what a bootstrap proposal produces. Proposals that weight in two
+    stages need a different estimator, so they report no evidence (see `Proposal.gives_marginal_likelihood`).
+    """
+    log_weights = np.asarray(log_weights, dtype=float)
+    finite = np.isfinite(log_weights)
+    if not finite.any():
+        return -np.inf
+    largest = log_weights[finite].max()
+    return float(largest + np.log(np.exp(log_weights[finite] - largest).sum()))
+
+
 def effective_sample_size(weights):
     """ESS = 1 / sum(w_i^2) for normalized weights."""
     weights = np.asarray(weights, dtype=float)

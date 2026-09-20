@@ -1,0 +1,64 @@
+% Particle Filters for Inference in Continuous State Space: course report.
+% Build inside the container:  docker exec pf-sampling-dev make -C report   (writes report/report.pdf)
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage[margin=2.5cm]{geometry}
+\usepackage{amsmath,amssymb,bm}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{siunitx}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\usepackage{xcolor}
+\usepackage{catchfile}
+\usepackage[style=numeric,sorting=nyt,backend=biber,doi=true,eprint=true,url=true,isbn=true,urldate=long]{biblatex}
+\addbibresource{references.bib}
+\usepackage[colorlinks=true, linkcolor=black, citecolor=black, urlcolor=blue]{hyperref}
+\usepackage[capitalise]{cleveref}
+
+\input{macros}
+
+\title{Particle Filters for Inference in Continuous State Space}
+\author{Mohammed}
+\date{September 2026}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+The particle filter carries inference on a graphical model from discrete variables to continuous, non-Gaussian
+ones by representing each belief with weighted samples. This report treats one continuous problem under all three
+headings of a graphical model, representation, inference and learning. How well it works depends on its sampling choices: how
+new particles are proposed, how and when they are resampled, and how many there are. This report writes robot
+localization and simultaneous localization and mapping (SLAM) as dynamic Bayesian networks, derives the particle
+filter and FastSLAM, the Rao-Blackwellized particle filter that samples the robot's trajectory and estimates each
+landmark analytically, as approximate inference on them, and compares these choices in controlled experiments
+over 20 simulated worlds each. The four common resampling schemes give the same accuracy in localization, while
+systematic resampling keeps the most distinct particles; resampling adaptively, when the effective sample size
+or the largest weight signals degeneracy, is as accurate as resampling at every step, with low thresholds resampling at
+only a third to a half of the steps, and never resampling triples the error. Measurement-informed proposals keep a larger effective sample
+size: the auxiliary particle filter is the most accurate localization filter from 100 particles on, and
+FastSLAM 2.0 gives a better map than FastSLAM 1.0 with 5 to 10 particles. Beyond about 500 particles the error
+of the bootstrap filter improves only slowly while the runtime keeps growing. Finally the noise parameters of the
+network are estimated from the recorded runs by the marginal likelihood the filter's own weights provide: the two
+measurement parameters are recovered to within one step of the sweep and independent recordings agree on them,
+while the two motion parameters are undetermined by a 30-step run and identified on a 400-step one. Learning them
+needs the filter to track and enough particles for the likelihood estimate to be usable.
+\end{abstract}
+
+\input{sections/01_introduction}
+\input{sections/02_background}
+\input{sections/03_particle_filters}
+\input{sections/04_method}
+\input{sections/05_experiments}
+\input{sections/06_discussion}
+\input{sections/07_conclusion}
+
+\appendix
+\input{sections/A_upstream_code}
+
+{\sloppy\printbibliography}
+
+\end{document}

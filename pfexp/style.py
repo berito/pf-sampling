@@ -21,6 +21,7 @@ SLOTS = {
     "motion_model": 0, "auxiliary": 1, "extended_kalman": 2,
     "fastslam1": 0, "fastslam2": 1,
     "none": 0, "resample_move_mh": 1,
+    "uniform": 0, "known": 1,
 }
 
 NAMES = {
@@ -29,12 +30,15 @@ NAMES = {
     "motion_model": "Motion model", "auxiliary": "Auxiliary PF", "extended_kalman": "Extended Kalman PF",
     "fastslam1": "FastSLAM 1.0", "fastslam2": "FastSLAM 2.0",
     "none": "No move", "resample_move_mh": "Resample-move (MH)",
+    "uniform": "Uniform start", "known": "Known start",
 }
 
 # Column headers for the settings an experiment varies.
 SETTINGS = {
     "resampler": "Resampler", "trigger": "When to resample", "proposal": "Proposal", "move": "Move",
     "n_particles": "Particles", "resample_threshold": "Resampling threshold",
+    "start": "Start", "range_std": "Assumed range noise", "bearing_std": "Assumed bearing noise",
+    "forward_std": "Assumed forward noise", "turn_std": "Assumed turn noise",
 }
 
 # Metrics whose values span orders of magnitude, plotted on a logarithmic axis.
@@ -56,6 +60,8 @@ METRICS = {
     "collapses": ("Weight collapses", "", "lower"),
     "nees_mean": ("Mean NEES", "", 3.0),
     "nees_median": ("Median NEES", "", 3.0),
+    "log_likelihood": ("Log likelihood", "", "higher"),
+    "log_likelihood_per_step": ("Log likelihood per step", "", "higher"),
     "runtime_per_step_ms": ("Runtime per step", "ms", "lower"),
     "runtime_total_s": ("Total runtime", "s", "lower"),
 }

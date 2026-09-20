@@ -1,0 +1,331 @@
+{
+ "id": "E11_estimator_resampler",
+ "title": "Does the resampling scheme change what can be learned?",
+ "question": "The same sweep of the assumed range noise under the four resampling schemes. E01 showed that they keep different numbers of distinct particles; does that carry through to the likelihood estimate and to the value it picks out?",
+ "number": "001",
+ "note": "",
+ "hypothesis": "The schemes differ in particle diversity rather than in the weights themselves, so the estimates should be close, with the schemes that keep fewer distinct particles giving a slightly noisier likelihood.",
+ "setup": [
+  "Result set 001",
+  "Filter: mcl",
+  "Fixed: proposal = motion_model, trigger = ess_threshold (threshold=0.5), n_particles = 200, start = known, bearing_std = 0.05, forward_std = 0.005, turn_std = 0.002",
+  "Varied: resampler: multinomial, residual, stratified, systematic; range_std: 0.08, 0.107, 0.142, 0.19, 0.253, 0.337, 0.45, 0.6, 0.8",
+  "Seeds: 20 (each seed fixes the world and the filter's randomness, the same for every variant), 720 runs"
+ ],
+ "table": {
+  "header": [
+   "Resampler",
+   "Assumed range noise",
+   "Seeds",
+   "Log likelihood",
+   "Position RMSE (m)"
+  ],
+  "rows": [
+   [
+    "Multinomial",
+    "0.08",
+    "20",
+    "-706 \u00b1 1.1e+03",
+    "0.263 \u00b1 0.23"
+   ],
+   [
+    "Multinomial",
+    "0.107",
+    "20",
+    "-140 \u00b1 6.1e+02",
+    "0.194 \u00b1 0.22"
+   ],
+   [
+    "Multinomial",
+    "0.142",
+    "20",
+    "153 \u00b1 73",
+    "0.123 \u00b1 0.087"
+   ],
+   [
+    "Multinomial",
+    "0.19",
+    "20",
+    "197 \u00b1 26",
+    "0.0929 \u00b1 0.052"
+   ],
+   [
+    "Multinomial",
+    "0.253",
+    "20",
+    "194 \u00b1 19",
+    "0.0945 \u00b1 0.055"
+   ],
+   [
+    "Multinomial",
+    "0.337",
+    "20",
+    "178 \u00b1 14",
+    "0.0983 \u00b1 0.048"
+   ],
+   [
+    "Multinomial",
+    "0.45",
+    "20",
+    "155 \u00b1 8.6",
+    "0.0984 \u00b1 0.04"
+   ],
+   [
+    "Multinomial",
+    "0.6",
+    "20",
+    "127 \u00b1 8.3",
+    "0.0999 \u00b1 0.038"
+   ],
+   [
+    "Multinomial",
+    "0.8",
+    "20",
+    "95.9 \u00b1 8.5",
+    "0.103 \u00b1 0.04"
+   ],
+   [
+    "Residual",
+    "0.08",
+    "20",
+    "-630 \u00b1 1e+03",
+    "0.257 \u00b1 0.22"
+   ],
+   [
+    "Residual",
+    "0.107",
+    "20",
+    "-77.5 \u00b1 4.7e+02",
+    "0.173 \u00b1 0.18"
+   ],
+   [
+    "Residual",
+    "0.142",
+    "20",
+    "160 \u00b1 88",
+    "0.103 \u00b1 0.085"
+   ],
+   [
+    "Residual",
+    "0.19",
+    "20",
+    "194 \u00b1 38",
+    "0.097 \u00b1 0.071"
+   ],
+   [
+    "Residual",
+    "0.253",
+    "20",
+    "197 \u00b1 16",
+    "0.0901 \u00b1 0.045"
+   ],
+   [
+    "Residual",
+    "0.337",
+    "20",
+    "180 \u00b1 8.9",
+    "0.0911 \u00b1 0.04"
+   ],
+   [
+    "Residual",
+    "0.45",
+    "20",
+    "156 \u00b1 6.2",
+    "0.0898 \u00b1 0.025"
+   ],
+   [
+    "Residual",
+    "0.6",
+    "20",
+    "126 \u00b1 7.7",
+    "0.0956 \u00b1 0.037"
+   ],
+   [
+    "Residual",
+    "0.8",
+    "20",
+    "96.4 \u00b1 6.6",
+    "0.0999 \u00b1 0.038"
+   ],
+   [
+    "Stratified",
+    "0.08",
+    "20",
+    "-781 \u00b1 1.1e+03",
+    "0.294 \u00b1 0.23"
+   ],
+   [
+    "Stratified",
+    "0.107",
+    "20",
+    "-176 \u00b1 6.4e+02",
+    "0.203 \u00b1 0.23"
+   ],
+   [
+    "Stratified",
+    "0.142",
+    "20",
+    "167 \u00b1 56",
+    "0.103 \u00b1 0.069"
+   ],
+   [
+    "Stratified",
+    "0.19",
+    "20",
+    "197 \u00b1 30",
+    "0.091 \u00b1 0.059"
+   ],
+   [
+    "Stratified",
+    "0.253",
+    "20",
+    "196 \u00b1 17",
+    "0.0913 \u00b1 0.052"
+   ],
+   [
+    "Stratified",
+    "0.337",
+    "20",
+    "179 \u00b1 14",
+    "0.092 \u00b1 0.049"
+   ],
+   [
+    "Stratified",
+    "0.45",
+    "20",
+    "156 \u00b1 11",
+    "0.0935 \u00b1 0.051"
+   ],
+   [
+    "Stratified",
+    "0.6",
+    "20",
+    "128 \u00b1 6.2",
+    "0.0946 \u00b1 0.029"
+   ],
+   [
+    "Stratified",
+    "0.8",
+    "20",
+    "97.3 \u00b1 6.5",
+    "0.0929 \u00b1 0.024"
+   ],
+   [
+    "Systematic",
+    "0.08",
+    "20",
+    "-543 \u00b1 1e+03",
+    "0.221 \u00b1 0.22"
+   ],
+   [
+    "Systematic",
+    "0.107",
+    "20",
+    "-23.3 \u00b1 4e+02",
+    "0.154 \u00b1 0.16"
+   ],
+   [
+    "Systematic",
+    "0.142",
+    "20",
+    "163 \u00b1 58",
+    "0.109 \u00b1 0.075"
+   ],
+   [
+    "Systematic",
+    "0.19",
+    "20",
+    "194 \u00b1 39",
+    "0.0957 \u00b1 0.069"
+   ],
+   [
+    "Systematic",
+    "0.253",
+    "20",
+    "197 \u00b1 15",
+    "0.0846 \u00b1 0.042"
+   ],
+   [
+    "Systematic",
+    "0.337",
+    "20",
+    "181 \u00b1 8.1",
+    "0.0843 \u00b1 0.03"
+   ],
+   [
+    "Systematic",
+    "0.45",
+    "20",
+    "157 \u00b1 6.8",
+    "0.0857 \u00b1 0.025"
+   ],
+   [
+    "Systematic",
+    "0.6",
+    "20",
+    "128 \u00b1 6.8",
+    "0.0904 \u00b1 0.025"
+   ],
+   [
+    "Systematic",
+    "0.8",
+    "20",
+    "96.1 \u00b1 7.2",
+    "0.105 \u00b1 0.044"
+   ]
+  ]
+ },
+ "best": {
+  "header": [
+   "Resampler",
+   "Seeds",
+   "Best assumed range noise (median)",
+   "Range over seeds",
+   "Seeds at the median"
+  ],
+  "rows": [
+   [
+    "Multinomial",
+    "20",
+    "0.19",
+    "0.19 to 0.45",
+    "15 of 20"
+   ],
+   [
+    "Residual",
+    "20",
+    "0.19",
+    "0.19 to 0.337",
+    "14 of 20"
+   ],
+   [
+    "Stratified",
+    "20",
+    "0.19",
+    "0.19 to 0.253",
+    "15 of 20"
+   ],
+   [
+    "Systematic",
+    "20",
+    "0.19",
+    "0.19 to 0.337",
+    "14 of 20"
+   ]
+  ],
+  "metric": "log_likelihood"
+ },
+ "findings": [
+  "At every range std: no difference beyond the seed-to-seed spread in Log likelihood and Position RMSE."
+ ],
+ "figures": [
+  "figures/metrics.png",
+  "figures/best_per_seed.png"
+ ],
+ "notes": [],
+ "runs": 720,
+ "expected_runs": 720,
+ "hosts": [
+  "labdesktop"
+ ]
+}

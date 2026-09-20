@@ -41,9 +41,13 @@ class Proposal(Technique):
 
     Which filter a proposal belongs to is set by `filter`; the filter defines the exact call.
     It returns the new particles and their unnormalized log weights.
+
+    `gives_marginal_likelihood` says whether those weights sum to p(z_t | z_1:t-1), which holds for a
+    bootstrap proposal but not for one that weights in two stages.
     """
 
     filter = None
+    gives_marginal_likelihood = False
 
     def initialize(self, particles, model):
         """Add any per-particle state the proposal needs (optional)."""

@@ -29,26 +29,18 @@ Mean ± standard deviation over seeds.
 
 ## Findings (computed automatically)
 
-- At n particles = 5: Position RMSE: lowest is FastSLAM 2.0 (0.773), vs FastSLAM 1.0 (1.12), a 31% difference, within the seed-to-seed spread (95% intervals).
-- At n particles = 5: ATE (aligned): lowest is FastSLAM 2.0 (0.257), vs FastSLAM 1.0 (0.335), a 23% difference, clearly beyond the seed-to-seed spread (95% intervals).
-- At n particles = 5: Map error (aligned): lowest is FastSLAM 2.0 (0.102), vs FastSLAM 1.0 (0.16), a 36% difference, clearly beyond the seed-to-seed spread (95% intervals).
-- At n particles = 5: Mean ESS / N: highest is FastSLAM 2.0 (0.813), vs FastSLAM 1.0 (0.764), a 6% difference, clearly beyond the seed-to-seed spread (95% intervals).
-- At n particles = 5: Runtime per step: lowest is FastSLAM 1.0 (1.28), vs FastSLAM 2.0 (1.98), a 36% difference, clearly beyond the seed-to-seed spread (95% intervals).
-- At n particles = 10: Position RMSE: lowest is FastSLAM 2.0 (0.774), vs FastSLAM 1.0 (0.958), a 19% difference, within the seed-to-seed spread (95% intervals).
-- At n particles = 10: ATE (aligned): lowest is FastSLAM 2.0 (0.215), vs FastSLAM 1.0 (0.255), a 16% difference, clearly beyond the seed-to-seed spread (95% intervals).
-- At n particles = 10: Map error (aligned): lowest is FastSLAM 2.0 (0.0909), vs FastSLAM 1.0 (0.111), a 18% difference, within the seed-to-seed spread (95% intervals).
-- At n particles = 10: Mean ESS / N: highest is FastSLAM 2.0 (0.802), vs FastSLAM 1.0 (0.753), a 6% difference, clearly beyond the seed-to-seed spread (95% intervals).
-- At n particles = 10: Runtime per step: lowest is FastSLAM 1.0 (1.39), vs FastSLAM 2.0 (2.15), a 35% difference, clearly beyond the seed-to-seed spread (95% intervals).
-- At n particles = 25: Position RMSE: lowest is FastSLAM 1.0 (0.673), vs FastSLAM 2.0 (0.748), a 10% difference, within the seed-to-seed spread (95% intervals).
-- At n particles = 25: ATE (aligned): lowest is FastSLAM 1.0 (0.212), vs FastSLAM 2.0 (0.275), a 23% difference, clearly beyond the seed-to-seed spread (95% intervals).
-- At n particles = 25: Map error (aligned): lowest is FastSLAM 2.0 (0.078), vs FastSLAM 1.0 (0.0946), a 18% difference, within the seed-to-seed spread (95% intervals).
-- At n particles = 25: Mean ESS / N: highest is FastSLAM 2.0 (0.795), vs FastSLAM 1.0 (0.75), a 6% difference, clearly beyond the seed-to-seed spread (95% intervals).
-- At n particles = 25: Runtime per step: lowest is FastSLAM 1.0 (1.86), vs FastSLAM 2.0 (2.66), a 30% difference, clearly beyond the seed-to-seed spread (95% intervals).
-- At n particles = 100: Position RMSE: lowest is FastSLAM 2.0 (0.737), vs FastSLAM 1.0 (0.777), a 5% difference, within the seed-to-seed spread (95% intervals).
-- At n particles = 100: ATE (aligned): lowest is FastSLAM 2.0 (0.228), vs FastSLAM 1.0 (0.247), a 8% difference, within the seed-to-seed spread (95% intervals).
-- At n particles = 100: Map error (aligned): lowest is FastSLAM 2.0 (0.0479), vs FastSLAM 1.0 (0.0565), a 15% difference, within the seed-to-seed spread (95% intervals).
-- At n particles = 100: Mean ESS / N: highest is FastSLAM 2.0 (0.793), vs FastSLAM 1.0 (0.748), a 6% difference, clearly beyond the seed-to-seed spread (95% intervals).
-- At n particles = 100: Runtime per step: lowest is FastSLAM 1.0 (3.19), vs FastSLAM 2.0 (4.79), a 33% difference, clearly beyond the seed-to-seed spread (95% intervals).
+- At n particles = 5: clear differences in ATE (aligned) (FastSLAM 2.0 0.257 vs FastSLAM 1.0 0.335, 23%), Map error (aligned) (FastSLAM 2.0 0.102 vs FastSLAM 1.0 0.16, 36%), Mean ESS / N (FastSLAM 2.0 0.813 vs FastSLAM 1.0 0.764, 6%) and Runtime per step (FastSLAM 1.0 1.28 vs FastSLAM 2.0 1.98, 36%).
+- At n particles = 5: no difference beyond the seed-to-seed spread in Position RMSE.
+- At n particles = 10: clear differences in ATE (aligned) (FastSLAM 2.0 0.215 vs FastSLAM 1.0 0.255, 16%), Mean ESS / N (FastSLAM 2.0 0.802 vs FastSLAM 1.0 0.753, 6%) and Runtime per step (FastSLAM 1.0 1.39 vs FastSLAM 2.0 2.15, 35%).
+- At n particles = 10: no difference beyond the seed-to-seed spread in Position RMSE and Map error (aligned).
+- At n particles = 25: clear differences in ATE (aligned) (FastSLAM 1.0 0.212 vs FastSLAM 2.0 0.275, 23%), Mean ESS / N (FastSLAM 2.0 0.795 vs FastSLAM 1.0 0.75, 6%) and Runtime per step (FastSLAM 1.0 1.86 vs FastSLAM 2.0 2.66, 30%).
+- At n particles = 25: no difference beyond the seed-to-seed spread in Position RMSE and Map error (aligned).
+- At n particles = 100: clear differences in Mean ESS / N (FastSLAM 2.0 0.793 vs FastSLAM 1.0 0.748, 6%) and Runtime per step (FastSLAM 1.0 3.19 vs FastSLAM 2.0 4.79, 33%).
+- At n particles = 100: no difference beyond the seed-to-seed spread in Position RMSE, ATE (aligned) and Map error (aligned).
+
+## Notes
+
+- 160 of 160 runs were made with a different version of the code than the current one.
 
 ## Figures
 

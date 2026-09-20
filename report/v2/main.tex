@@ -1,0 +1,70 @@
+% Particle Filters for Inference in Continuous State Space: course report, version 2.
+% Build inside the container:  docker exec pf-sampling-dev make -C report   (writes report/v2/report.pdf)
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage[margin=2.5cm]{geometry}
+\usepackage{amsmath,amssymb,bm}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{siunitx}
+\usepackage{xcolor}
+\usepackage{catchfile}
+\usepackage[style=ieee,sorting=none,backend=biber,doi=true,eprint=true,url=true,isbn=false]{biblatex}
+\addbibresource{references.bib}
+\usepackage[colorlinks=true, linkcolor=black, citecolor=black, urlcolor=blue]{hyperref}
+\usepackage[capitalise]{cleveref}
+\usepackage{multicol}
+
+\setcounter{secnumdepth}{1}
+% keep tables and figures next to the text that discusses them
+\renewcommand{\topfraction}{0.9}
+\renewcommand{\bottomfraction}{0.8}
+\renewcommand{\textfraction}{0.07}
+\renewcommand{\floatpagefraction}{0.75}
+\setcounter{topnumber}{3}
+\setcounter{bottomnumber}{2}
+\setcounter{totalnumber}{4}   % sections numbered, subsections are plain headings
+\input{macros}
+
+\title{Sampling in Particle-Filter Localization and SLAM}
+\author{Mohammed}
+\date{September 2026}
+
+\begin{document}
+\maketitle
+
+\section*{Summary}
+
+Localization and SLAM are estimation problems on a graphical model whose structure is fixed in advance by how the
+robot moves and what its sensor reads, so the graph itself never has to be learned. What the problem does leave
+open is the inference: the belief over the robot's poses cannot be computed exactly for this model, so it is
+approximated by sampling. The noise of the motion and measurement models is almost always set by hand; in this
+project I estimate it from the data the robot recorded.
+
+I built a testbed that makes a particle filter's sampling choices interchangeable, so that one can be varied
+while the world, the trajectory and the random seed stay fixed, and measured two of them over twenty simulated
+worlds in localization and in SLAM: which resampling scheme is used, and when resampling happens. Whether the
+filter resamples at all is what matters; among the rules that do resample, and among the four schemes, accuracy
+is the same. The schemes differ instead in how many distinct particles survive, and that reaches the estimate
+only in FastSLAM with few particles, where a lost particle takes its map with it.
+
+The weights the filter already computes also score how well a given noise setting explains the recording, so the
+noise can be estimated rather than assumed. The two measurement parameters come back close to the values the
+world used, \SI{0.19}{\meter} against \SI{0.2}{\meter} and \SI{0.047}{\radian} against \SI{0.05}{\radian}. The
+two motion parameters leave no trace in a 30-step run and are recovered on a 400-step one. Learning them at all
+needs the filter to be tracking, and enough particles for the score to be reliable, so how good the inference is
+sets a ceiling on what can be learned.
+
+\input{sections/01_background}
+\input{sections/02_problem}
+\input{sections/03_experiments}
+\input{sections/04_discussion}
+
+\appendix
+\input{sections/A_upstream_code}
+
+\small\sloppy\printbibliography[title=References]
+
+\end{document}

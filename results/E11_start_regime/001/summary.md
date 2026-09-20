@@ -1,0 +1,64 @@
+# Does learning depend on the filter tracking at all? (001)
+
+**Question.** The same sweep of the assumed range noise, run from a known start pose and from the uniform start that E01-E04 use. Does the likelihood still pick out the true value (0.2 m) when the filter has to find the robot from scratch?
+
+**Hypothesis.** From a known start the likelihood peaks at the true value. From a uniform start the filter cannot find the robot while it assumes the true, small noise, so the estimate collapses and the likelihood keeps rewarding wider noise instead: learning rests on the inference working first.
+
+## Setup
+
+- Result set 001
+- Filter: mcl
+- Fixed: proposal = motion_model, resampler = systematic, trigger = ess_threshold (threshold=0.5), n_particles = 2000, bearing_std = 0.05, forward_std = 0.005, turn_std = 0.002
+- Varied: start: known, uniform; range_std: 0.08, 0.107, 0.142, 0.19, 0.253, 0.337, 0.45, 0.6, 0.8
+- Seeds: 20 (each seed fixes the world and the filter's randomness, the same for every variant), 360 runs
+
+## Results
+
+| Start         |   Assumed range noise |   Seeds | Log likelihood      | Position RMSE (m)   |
+|:--------------|----------------------:|--------:|:--------------------|:--------------------|
+| Known start   |                 0.08  |      20 | -252 ± 5.6e+02      | 0.157 ± 0.15        |
+| Known start   |                 0.107 |      20 | 99.1 ± 90           | 0.0961 ± 0.067      |
+| Known start   |                 0.142 |      20 | 185 ± 24            | 0.0692 ± 0.025      |
+| Known start   |                 0.19  |      20 | 205 ± 13            | 0.0629 ± 0.017      |
+| Known start   |                 0.253 |      20 | 201 ± 8.7           | 0.0629 ± 0.017      |
+| Known start   |                 0.337 |      20 | 183 ± 6.5           | 0.0663 ± 0.018      |
+| Known start   |                 0.45  |      20 | 158 ± 5.7           | 0.0711 ± 0.018      |
+| Known start   |                 0.6   |      20 | 129 ± 5.6           | 0.0768 ± 0.019      |
+| Known start   |                 0.8   |      20 | 98 ± 5.7            | 0.0824 ± 0.02       |
+| Uniform start |                 0.08  |      20 | -5.9e+04 ± 4.8e+04  | 3.09 ± 1.5          |
+| Uniform start |                 0.107 |      20 | -2.68e+04 ± 2.2e+04 | 2.46 ± 1.3          |
+| Uniform start |                 0.142 |      20 | -1.82e+04 ± 1.7e+04 | 2.37 ± 1.5          |
+| Uniform start |                 0.19  |      20 | -1.25e+04 ± 1.1e+04 | 2.25 ± 1.5          |
+| Uniform start |                 0.253 |      20 | -9.72e+03 ± 8.3e+03 | 2.12 ± 1.3          |
+| Uniform start |                 0.337 |      20 | -7.02e+03 ± 6.7e+03 | 1.81 ± 1.1          |
+| Uniform start |                 0.45  |      20 | -7.31e+03 ± 7e+03   | 1.87 ± 1.2          |
+| Uniform start |                 0.6   |      20 | -6.13e+03 ± 6.9e+03 | 1.7 ± 1.3           |
+| Uniform start |                 0.8   |      20 | -5.2e+03 ± 6.4e+03  | 1.53 ± 1.1          |
+
+Mean ± standard deviation over seeds.
+
+## Estimate from each recording on its own
+
+| Start         |   Seeds |   Best assumed range noise (median) | Range over seeds   | Seeds at the median   |
+|:--------------|--------:|------------------------------------:|:-------------------|:----------------------|
+| Known start   |      20 |                                0.19 | 0.19 to 0.253      | 17 of 20              |
+| Uniform start |      20 |                                0.6  | 0.19 to 0.8        | 2 of 20               |
+
+The value of the swept setting with the highest log likelihood within each seed's runs.
+
+## Findings (computed automatically)
+
+- At range std = 0.08: clear differences in Log likelihood (Known start -252 vs Uniform start -5.9e+04, 100%) and Position RMSE (Known start 0.157 vs Uniform start 3.09, 95%).
+- At range std = 0.107: clear differences in Log likelihood (Known start 99.1 vs Uniform start -2.68e+04, 100%) and Position RMSE (Known start 0.0961 vs Uniform start 2.46, 96%).
+- At range std = 0.142: clear differences in Log likelihood (Known start 185 vs Uniform start -1.82e+04, 101%) and Position RMSE (Known start 0.0692 vs Uniform start 2.37, 97%).
+- At range std = 0.19: clear differences in Log likelihood (Known start 205 vs Uniform start -1.25e+04, 102%) and Position RMSE (Known start 0.0629 vs Uniform start 2.25, 97%).
+- At range std = 0.253: clear differences in Log likelihood (Known start 201 vs Uniform start -9.72e+03, 102%) and Position RMSE (Known start 0.0629 vs Uniform start 2.12, 97%).
+- At range std = 0.337: clear differences in Log likelihood (Known start 183 vs Uniform start -7.02e+03, 103%) and Position RMSE (Known start 0.0663 vs Uniform start 1.81, 96%).
+- At range std = 0.45: clear differences in Log likelihood (Known start 158 vs Uniform start -7.31e+03, 102%) and Position RMSE (Known start 0.0711 vs Uniform start 1.87, 96%).
+- At range std = 0.6: clear differences in Log likelihood (Known start 129 vs Uniform start -6.13e+03, 102%) and Position RMSE (Known start 0.0768 vs Uniform start 1.7, 95%).
+- At range std = 0.8: clear differences in Log likelihood (Known start 98 vs Uniform start -5.2e+03, 102%) and Position RMSE (Known start 0.0824 vs Uniform start 1.53, 95%).
+
+## Figures
+
+![metrics](figures/metrics.png)
+![best_per_seed](figures/best_per_seed.png)

@@ -33,24 +33,14 @@ Mean ± standard deviation over seeds.
 
 ## Findings (computed automatically)
 
-- At n particles = 50: Position RMSE: lowest is Systematic (0.649), vs Stratified (0.851), a 24% difference, within the seed-to-seed spread (95% intervals).
-- At n particles = 50: ATE (aligned): lowest is Systematic (0.463), vs Stratified (0.502), a 8% difference, within the seed-to-seed spread (95% intervals).
-- At n particles = 50: Distinct after resampling / N: highest is Systematic (0.619), vs Multinomial (0.472), a 31% difference, clearly beyond the seed-to-seed spread (95% intervals).
-- At n particles = 50: Mean ESS / N: highest is Multinomial (0.56), vs Stratified (0.542), a 3% difference, within the seed-to-seed spread (95% intervals).
-- At n particles = 50: Median NEES: closest to the ideal 3 is Systematic (265), vs Multinomial (1.96e+08), a 100% difference, within the seed-to-seed spread (95% intervals).
-- At n particles = 50: Runtime per step: lowest is Systematic (0.299), vs Residual (0.695), a 57% difference, clearly beyond the seed-to-seed spread (95% intervals).
-- At n particles = 200: Position RMSE: lowest is Stratified (0.247), vs Residual (0.269), a 8% difference, within the seed-to-seed spread (95% intervals).
-- At n particles = 200: ATE (aligned): lowest is Stratified (0.196), vs Residual (0.21), a 7% difference, within the seed-to-seed spread (95% intervals).
-- At n particles = 200: Distinct after resampling / N: highest is Systematic (0.687), vs Multinomial (0.525), a 31% difference, clearly beyond the seed-to-seed spread (95% intervals).
-- At n particles = 200: Mean ESS / N: highest is Multinomial (0.668), vs Residual (0.656), a 2% difference, within the seed-to-seed spread (95% intervals).
-- At n particles = 200: Median NEES: closest to the ideal 3 is Residual (2.67), vs Multinomial (9.18), a 71% difference, within the seed-to-seed spread (95% intervals).
-- At n particles = 200: Runtime per step: lowest is Systematic (0.592), vs Stratified (3.03), a 80% difference, clearly beyond the seed-to-seed spread (95% intervals).
-- At n particles = 1000: Position RMSE: lowest is Multinomial (0.129), vs Systematic (0.13), a 1% difference, within the seed-to-seed spread (95% intervals).
-- At n particles = 1000: ATE (aligned): lowest is Multinomial (0.107), vs Residual (0.108), a 1% difference, within the seed-to-seed spread (95% intervals).
-- At n particles = 1000: Distinct after resampling / N: highest is Systematic (0.715), vs Multinomial (0.541), a 32% difference, clearly beyond the seed-to-seed spread (95% intervals).
-- At n particles = 1000: Mean ESS / N: highest is Stratified (0.706), vs Systematic (0.705), a 0% difference, within the seed-to-seed spread (95% intervals).
-- At n particles = 1000: Median NEES: closest to the ideal 3 is Residual (0.469), vs Multinomial (0.447), a 5% difference, within the seed-to-seed spread (95% intervals).
-- At n particles = 1000: Runtime per step: lowest is Systematic (2.11), vs Stratified (49.1), a 96% difference, clearly beyond the seed-to-seed spread (95% intervals).
+- At n particles = 50: clear differences in Distinct after resampling / N (Systematic 0.619 vs Multinomial 0.472, 31%) and Runtime per step (Systematic 0.299 vs Residual 0.695, 57%).
+- At n particles = 200: clear differences in Distinct after resampling / N (Systematic 0.687 vs Multinomial 0.525, 31%) and Runtime per step (Systematic 0.592 vs Stratified 3.03, 80%).
+- At n particles = 1000: clear differences in Distinct after resampling / N (Systematic 0.715 vs Multinomial 0.541, 32%) and Runtime per step (Systematic 2.11 vs Stratified 49.1, 96%).
+- At every n particles: no difference beyond the seed-to-seed spread in Position RMSE, ATE (aligned), Mean ESS / N and Median NEES.
+
+## Notes
+
+- 240 of 240 runs were made with a different version of the code than the current one.
 
 ## Figures
 

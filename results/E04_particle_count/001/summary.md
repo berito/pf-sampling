@@ -29,12 +29,12 @@ Mean ± standard deviation over seeds.
 
 ## Findings (computed automatically)
 
-- Position RMSE: lowest is 2500 (0.115), vs 10 (1.5), a 92% difference, clearly beyond the seed-to-seed spread (95% intervals).
-- ATE (aligned): lowest is 2500 (0.0981), vs 10 (0.779), a 87% difference, clearly beyond the seed-to-seed spread (95% intervals).
-- Mean ESS / N: highest is 2500 (0.549), vs 25 (0.405), a 36% difference, clearly beyond the seed-to-seed spread (95% intervals).
-- Median NEES: closest to the ideal 3 is 250 (1.92), vs 10 (5.08e+08), a 100% difference, within the seed-to-seed spread (95% intervals).
-- Runtime per step: lowest is 10 (0.182), vs 2500 (3.69), a 95% difference, clearly beyond the seed-to-seed spread (95% intervals).
-- Total runtime: lowest is 10 (0.00546), vs 2500 (0.111), a 95% difference, clearly beyond the seed-to-seed spread (95% intervals).
+- clear differences in Position RMSE (2500 0.115 vs 10 1.5, 92%), ATE (aligned) (2500 0.0981 vs 10 0.779, 87%), Mean ESS / N (2500 0.549 vs 25 0.405, 36%), Runtime per step (10 0.182 vs 2500 3.69, 95%) and Total runtime (10 0.00546 vs 2500 0.111, 95%).
+- no difference beyond the seed-to-seed spread in Median NEES.
+
+## Notes
+
+- 160 of 160 runs were made with a different version of the code than the current one.
 
 ## Figures
 

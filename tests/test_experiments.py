@@ -106,3 +106,32 @@ def test_findings_do_not_judge_noise_from_a_single_seed():
                          index=["a", "b"])
     (sentence,) = analysis.findings(stats, ["position_rmse"])
     assert "not tested" in sentence and "clearly" not in sentence
+
+
+def test_best_per_seed_picks_each_seed_s_own_maximum():
+    import pandas as pd
+
+    experiment = E.Experiment(id="T", title="t", question="q", hypothesis="", filter="mcl", world={},
+                              fixed={}, vary={"range_std": [0.1, 0.2, 0.4]}, seeds=[0, 1], path=None,
+                              report={"best": "log_likelihood"})
+    df = pd.DataFrame({
+        "seed": [0, 0, 0, 1, 1, 1],
+        "range_std": ["0.1", "0.2", "0.4", "0.1", "0.2", "0.4"],
+        "log_likelihood": [1.0, 9.0, 2.0, 5.0, 4.0, 3.0],
+    })
+    best = analysis.best_per_seed(experiment, df, "log_likelihood")
+    assert best["best"].tolist() == [0.2, 0.1]
+
+    header, (row,) = analysis.best_table(experiment, best, "log_likelihood")
+    assert row == ["2", "0.15", "0.1 to 0.2", "0 of 2"]
+    assert "Seeds at the median" in header
+
+
+def test_best_per_seed_needs_a_numeric_sweep():
+    import pandas as pd
+
+    experiment = E.Experiment(id="T", title="t", question="q", hypothesis="", filter="mcl", world={},
+                              fixed={}, vary={"resampler": ["multinomial", "systematic"]}, seeds=[0], path=None,
+                              report={"best": "log_likelihood"})
+    df = pd.DataFrame({"seed": [0, 0], "resampler": ["multinomial", "systematic"], "log_likelihood": [1.0, 2.0]})
+    assert analysis.best_per_seed(experiment, df, "log_likelihood") is None

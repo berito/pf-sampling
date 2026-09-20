@@ -87,18 +87,23 @@ def formatted_table(stats, metrics, experiment):
     return header, rows
 
 
-def write_tables(folder, stats, header, rows):
-    tables = folder / "tables"
-    tables.mkdir(parents=True, exist_ok=True)
-    stats.to_csv(tables / "summary.csv", index_label="variant", float_format="%.6g")
+def write_table(tables, name, header, rows):
+    """One table as markdown and as LaTeX, with the header cells wrapped so wide tables need less scaling."""
     table = pd.DataFrame(rows, columns=header)
-    (tables / "summary.md").write_text(table.to_markdown(index=False) + "\n")
+    (tables / f"{name}.md").write_text(table.to_markdown(index=False) + "\n")
     latex = table.to_latex(index=False, escape=True).replace("±", r"$\pm$")
     lines = latex.splitlines()
     header_line = next(i for i, line in enumerate(lines) if line.strip() == r"\toprule") + 1
     lines[header_line] = " & ".join(_wrapped_header(h) for h in header) + r" \\"
-    (tables / "summary.tex").write_text("\n".join(lines) + "\n")
+    (tables / f"{name}.tex").write_text("\n".join(lines) + "\n")
     return table
+
+
+def write_tables(folder, stats, header, rows):
+    tables = folder / "tables"
+    tables.mkdir(parents=True, exist_ok=True)
+    stats.to_csv(tables / "summary.csv", index_label="variant", float_format="%.6g")
+    return write_table(tables, "summary", header, rows)
 
 
 def _wrapped_header(text, width=14):
@@ -114,40 +119,62 @@ def _wrapped_header(text, width=14):
 
 # --- findings -------------------------------------------------------------------------------
 
+def _comparison(stats, metric):
+    """Best and worst variant on one metric, the gap, and whether it beats the seed-to-seed spread."""
+    direction = style.better(metric)
+    if f"{metric}_mean" not in stats or direction is None:
+        return None
+    mean, std, n = stats[f"{metric}_mean"], stats[f"{metric}_std"], stats["seeds"]
+    half_width = Z95 * std / np.sqrt(n)
+    if isinstance(direction, float):
+        distance = (mean - direction).abs()
+        best, worst = distance.idxmin(), distance.idxmax()
+    elif direction == "lower":
+        best, worst = mean.idxmin(), mean.idxmax()
+    else:
+        best, worst = mean.idxmax(), mean.idxmin()
+    if best == worst:
+        return None
+    gap = abs(mean[best] - mean[worst])
+    return {
+        "metric": style.METRICS.get(metric, (metric,))[0],
+        "best": best, "worst": worst, "best_value": mean[best], "worst_value": mean[worst],
+        "change": gap / abs(mean[worst]) * 100 if mean[worst] else float("nan"),
+        "separated": gap > half_width[best] + half_width[worst],
+        "tested": min(n[best], n[worst]) >= 2,
+    }
+
+
 def findings(stats, metrics, prefix=""):
-    """Plain sentences about which variant is best on each metric, and whether the gap is beyond noise."""
-    sentences = []
+    """A short statement per group: the differences that beat the spread, then the metrics with none.
+
+    The tables carry every number, so a difference the seeds cannot separate is worth one mention, not one
+    sentence per metric.
+    """
     if len(stats) < 2:
-        return sentences
-    for metric in metrics:
-        direction = style.better(metric)
-        if f"{metric}_mean" not in stats or direction is None:
-            continue
-        mean, std, n = stats[f"{metric}_mean"], stats[f"{metric}_std"], stats["seeds"]
-        half_width = Z95 * std / np.sqrt(n)
-        if isinstance(direction, float):
-            distance = (mean - direction).abs()
-            best, worst = distance.idxmin(), distance.idxmax()
-            what = f"closest to the ideal {direction:g}"
-        elif direction == "lower":
-            best, worst = mean.idxmin(), mean.idxmax()
-            what = "lowest"
-        else:
-            best, worst = mean.idxmax(), mean.idxmin()
-            what = "highest"
-        if best == worst:
-            continue
-        separated = abs(mean[best] - mean[worst]) > half_width[best] + half_width[worst]
-        change = abs(mean[best] - mean[worst]) / abs(mean[worst]) * 100 if mean[worst] else float("nan")
-        if min(n[best], n[worst]) < 2:  # one seed has no spread to compare against
-            verdict = "not tested (needs at least 2 seeds)"
-        else:
-            verdict = "clearly beyond the seed-to-seed spread" if separated else "within the seed-to-seed spread"
-        sentences.append(
-            f"{prefix}{style.METRICS.get(metric, (metric,))[0]}: {what} is {best} ({mean[best]:.3g}), "
-            f"vs {worst} ({mean[worst]:.3g}), a {change:.0f}% difference, {verdict} (95% intervals)."
-        )
+        return []
+    found = [c for c in (_comparison(stats, m) for m in metrics) if c]
+    if not found:
+        return []
+    untested = [c for c in found if not c["tested"]]
+    if untested:
+        names = ", ".join(c["metric"] for c in untested)
+        return [f"{prefix}{names}: not tested (needs at least 2 seeds)."]
+
+    clear = [c for c in found if c["separated"]]
+    flat = [c["metric"] for c in found if not c["separated"]]
+    sentences = []
+    if clear:
+        parts = [f"{c['metric']} ({c['best']} {c['best_value']:.3g} vs {c['worst']} "
+                 f"{c['worst_value']:.3g}, {c['change']:.0f}%)" for c in clear]
+        sentences.append(f"{prefix}clear differences in " + _join(parts) + ".")
+    if flat:
+        sentences.append(f"{prefix}no difference beyond the seed-to-seed spread in " + _join(flat) + ".")
     return sentences
+
+
+def _join(parts):
+    return parts[0] if len(parts) == 1 else ", ".join(parts[:-1]) + f" and {parts[-1]}"
 
 
 def grouped_findings(experiment, df, metrics):
@@ -163,15 +190,25 @@ def grouped_findings(experiment, df, metrics):
     sweep = sweep_key(experiment)
     compared = next((k for k in experiment.vary if k != sweep), next(iter(experiment.vary)))
     others = [k for k in experiment.vary if k != compared]
-    sentences = []
+    per_group = []
     for values, group in df.groupby(others, sort=False):
         values = values if isinstance(values, tuple) else (values,)
         where = ", ".join(f"{k.replace('_', ' ')} = {style.technique_name(v)}" for k, v in zip(others, values))
         labels = {E.label(v): style.technique_name(v) for v in experiment.vary[compared]}
         group = group.assign(variant=group[compared].map(labels))
         order = [labels[E.label(v)] for v in experiment.vary[compared] if labels[E.label(v)] in set(group["variant"])]
-        sentences += findings(summary_stats(group, order, metrics), metrics, prefix=f"At {where}: ")
-    return sentences
+        per_group.append((where, findings(summary_stats(group, order, metrics), metrics)))
+    return _with_repeats_merged(per_group, " and ".join(k.replace("_", " ") for k in others))
+
+
+def _with_repeats_merged(per_group, setting):
+    """Prefix each statement with the group it belongs to, except one that holds for every group."""
+    everywhere = [s for s in (per_group[0][1] if per_group else [])
+                  if len(per_group) > 1 and all(s in found for _, found in per_group[1:])]
+    sentences = []
+    for where, found in per_group:
+        sentences += [f"At {where}: {s}" for s in found if s not in everywhere]
+    return sentences + [f"At every {setting}: {s}" for s in everywhere]
 
 
 # --- figures --------------------------------------------------------------------------------
@@ -207,6 +244,62 @@ def sweep_key(experiment):
     """
     numeric = [k for k, v in experiment.vary.items() if all(isinstance(x, (int, float)) for x in v)]
     return numeric[-1] if numeric and len(experiment.vary) <= 2 else None
+
+
+def best_per_seed(experiment, df, metric):
+    """For a numeric sweep, the swept value with the highest `metric` within each seed's own runs.
+
+    A seed is one recording, so how far these values scatter says how much a single recording pins the
+    setting down, and whether independent recordings agree on it.
+    """
+    sweep = sweep_key(experiment)
+    if sweep is None or metric not in df:
+        return None
+    others = [k for k in experiment.vary if k != sweep]
+    values = df.assign(**{sweep: pd.to_numeric(df[sweep])})
+    keys = others + ["seed"]
+    rows = values.loc[values.groupby(keys, sort=False)[metric].idxmax(), keys + [sweep]]
+    return rows.rename(columns={sweep: "best"}).reset_index(drop=True)
+
+
+def best_table(experiment, best, metric):
+    """Header and rows: per group, the middle of the per-seed estimates and how widely they scatter."""
+    sweep = sweep_key(experiment)
+    others = [k for k in experiment.vary if k != sweep]
+    header = ([style.setting_label(k) for k in others] if others else []) + [
+        "Seeds", f"Best {style.setting_label(sweep).lower()} (median)", "Range over seeds", "Seeds at the median"]
+    groups = best.groupby(others[0], sort=False) if others else [(None, best)]
+    rows = []
+    for name, group in groups:
+        values = group["best"].to_numpy()
+        median = float(np.median(values))
+        names = [style.technique_name(name)] if others else []
+        rows.append(names + [str(len(values)), f"{median:.4g}",
+                             f"{values.min():.4g} to {values.max():.4g}",
+                             f"{int((values == median).sum())} of {len(values)}"])
+    return header, rows
+
+
+def best_figure(experiment, best, metric, figures):
+    """One point per recording, so agreement between recordings is visible."""
+    sweep = sweep_key(experiment)
+    others = [k for k in experiment.vary if k != sweep]
+    groups = list(best.groupby(others[0], sort=False)) if others else [(None, best)]
+    colours = style.colours([g for g, _ in groups]) if others else [style.CATEGORICAL[0]]
+    fig, ax = plt.subplots(figsize=(7.0, 1.2 + 0.5 * len(groups)))
+    for row, ((name, group), colour) in enumerate(zip(groups, colours)):
+        jitter = (np.random.default_rng(0).random(len(group)) - 0.5) * 0.25
+        ax.plot(group["best"], row + jitter, "o", color=colour, alpha=0.7, markersize=5)
+        ax.plot(np.median(group["best"]), row, "|", color=style.INK, markersize=18, markeredgewidth=2)
+    ax.set_yticks(range(len(groups)))
+    ax.set_yticklabels([style.technique_name(g) if g is not None else "" for g, _ in groups])
+    values = np.array(experiment.vary[sweep], dtype=float)
+    if values.min() > 0 and values.max() / values.min() >= 10:
+        ax.set_xscale("log")
+    ax.set_xlabel(f"{style.setting_label(sweep)} with the highest {style.metric_label(metric).lower()}"
+                  "   (one point per seed, bar: median)")
+    fig.tight_layout()
+    return save(fig, figures, "best_per_seed")
 
 
 def metrics_figure(experiment, df, stats, order, metrics, figures):
@@ -350,6 +443,14 @@ def build(experiment, folder):
         if trace in R.load_traces(folder, df["run_id"].iloc[0]):
             figures.append(traces_figure(experiment, folder, df, order, trace, figures_dir))
 
+    best = best_per_seed(experiment, df, experiment.best) if experiment.best else None
+    best_block = None
+    if best is not None and not best.empty:
+        header_b, rows_b = best_table(experiment, best, experiment.best)
+        best_block = {"header": header_b, "rows": rows_b, "metric": experiment.best}
+        write_table(folder / "tables", "best", header_b, rows_b)
+        figures.append(best_figure(experiment, best, experiment.best, figures_dir))
+
     expected = len(list(experiment.runs()))
     current = R.code_fingerprint()
     stale = int((df["code"] != current).sum())
@@ -365,7 +466,8 @@ def build(experiment, folder):
         "id": experiment.id, "title": experiment.title, "question": experiment.question.strip(),
         "number": info.get("number", folder.name), "note": info.get("note", ""),
         "hypothesis": experiment.hypothesis.strip(), "setup": setup_lines(experiment, len(df), info),
-        "table": {"header": header, "rows": rows}, "findings": grouped_findings(experiment, df, metrics),
+        "table": {"header": header, "rows": rows}, "best": best_block,
+        "findings": grouped_findings(experiment, df, metrics),
         "figures": figures, "notes": notes, "runs": len(df), "expected_runs": expected,
         "hosts": sorted(df["host"].unique().tolist()),
     }
@@ -382,6 +484,12 @@ def summary_markdown(summary):
     lines += ["## Setup", ""] + [f"- {line}" for line in summary["setup"]] + [""]
     lines += ["## Results", "", pd.DataFrame(summary["table"]["rows"], columns=summary["table"]["header"])
               .to_markdown(index=False), "", "Mean ± standard deviation over seeds.", ""]
+    if summary.get("best"):
+        best = summary["best"]
+        lines += ["## Estimate from each recording on its own", "",
+                  pd.DataFrame(best["rows"], columns=best["header"]).to_markdown(index=False), "",
+                  f"The value of the swept setting with the highest {style.metric_label(best['metric']).lower()} "
+                  "within each seed's runs.", ""]
     if summary["findings"]:
         lines += ["## Findings (computed automatically)", ""] + [f"- {s}" for s in summary["findings"]] + [""]
     if summary["notes"]:

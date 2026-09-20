@@ -29,18 +29,14 @@ Mean ± standard deviation over seeds.
 
 ## Findings (computed automatically)
 
-- At n particles = 10: Position RMSE: lowest is Multinomial (0.96), vs Stratified (1.06), a 10% difference, within the seed-to-seed spread (95% intervals).
-- At n particles = 10: ATE (aligned): lowest is Systematic (0.233), vs Multinomial (0.324), a 28% difference, clearly beyond the seed-to-seed spread (95% intervals).
-- At n particles = 10: Map error (aligned): lowest is Systematic (0.105), vs Multinomial (0.139), a 24% difference, clearly beyond the seed-to-seed spread (95% intervals).
-- At n particles = 10: Distinct after resampling / N: highest is Systematic (0.86), vs Multinomial (0.624), a 38% difference, clearly beyond the seed-to-seed spread (95% intervals).
-- At n particles = 10: Mean ESS / N: highest is Systematic (0.895), vs Residual (0.892), a 0% difference, within the seed-to-seed spread (95% intervals).
-- At n particles = 10: Runtime per step: lowest is Systematic (1.46), vs Residual (1.57), a 7% difference, clearly beyond the seed-to-seed spread (95% intervals).
-- At n particles = 50: Position RMSE: lowest is Stratified (0.58), vs Multinomial (0.975), a 41% difference, clearly beyond the seed-to-seed spread (95% intervals).
-- At n particles = 50: ATE (aligned): lowest is Stratified (0.205), vs Systematic (0.242), a 15% difference, within the seed-to-seed spread (95% intervals).
-- At n particles = 50: Map error (aligned): lowest is Stratified (0.069), vs Multinomial (0.0965), a 28% difference, clearly beyond the seed-to-seed spread (95% intervals).
-- At n particles = 50: Distinct after resampling / N: highest is Systematic (0.858), vs Multinomial (0.61), a 41% difference, clearly beyond the seed-to-seed spread (95% intervals).
-- At n particles = 50: Mean ESS / N: highest is Multinomial (0.893), vs Stratified (0.892), a 0% difference, within the seed-to-seed spread (95% intervals).
-- At n particles = 50: Runtime per step: lowest is Systematic (2.35), vs Residual (2.89), a 19% difference, clearly beyond the seed-to-seed spread (95% intervals).
+- At n particles = 10: clear differences in ATE (aligned) (Systematic 0.233 vs Multinomial 0.324, 28%), Map error (aligned) (Systematic 0.105 vs Multinomial 0.139, 24%), Distinct after resampling / N (Systematic 0.86 vs Multinomial 0.624, 38%) and Runtime per step (Systematic 1.46 vs Residual 1.57, 7%).
+- At n particles = 10: no difference beyond the seed-to-seed spread in Position RMSE and Mean ESS / N.
+- At n particles = 50: clear differences in Position RMSE (Stratified 0.58 vs Multinomial 0.975, 41%), Map error (aligned) (Stratified 0.069 vs Multinomial 0.0965, 28%), Distinct after resampling / N (Systematic 0.858 vs Multinomial 0.61, 41%) and Runtime per step (Systematic 2.35 vs Residual 2.89, 19%).
+- At n particles = 50: no difference beyond the seed-to-seed spread in ATE (aligned) and Mean ESS / N.
+
+## Notes
+
+- 160 of 160 runs were made with a different version of the code than the current one.
 
 ## Figures
 

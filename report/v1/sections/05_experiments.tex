@@ -1,0 +1,207 @@
+\section{Experiments and Results}\label{sec:experiments}
+
+% One subsection per experiment: question, setup, table, figure, what it shows.
+% Tables and figures are read from the current result set in results/<experiment>/ by \experimenttable and \experimentfigure;
+% the first argument is the config name in experiments/ (without .yaml). See report/README.md.
+
+Each experiment varies one sampling choice, sometimes together with the number of particles, and keeps everything
+else fixed. The tables give the mean and standard deviation over 20 seeds; the figures show the mean with its 95\%
+confidence interval. A difference is called clear when the 95\% intervals do not overlap (\cref{sec:method}).
+
+\subsection{Resampling scheme}\label{sec:e01}
+
+\paragraph{Question and setup.} Do the four resampling schemes give different accuracy or particle diversity when
+everything else is equal? The localization filter uses the motion-model proposal, resamples at every step so that only
+the scheme differs, and runs with 50, 200 and 1000 particles. The same comparison in FastSLAM 1.0 uses 10 and 50
+particles. The expectation was that the lower-variance schemes keep more distinct particles and give slightly lower
+error than multinomial resampling, most visibly with few particles.
+
+\paragraph{Results.} In localization (\cref{tab:E01_resampling_scheme_localization}) the schemes are equally accurate.
+At every particle count their position errors differ by less than the seed-to-seed spread; with 1000 particles all four
+reach 0.13\,m, and at 200 particles 0.25 to 0.27\,m. They differ clearly in diversity. After a resampling step,
+systematic resampling keeps 72\% distinct particles with 1000 particles, stratified 67\%, residual 65\% and multinomial
+54\%, and the same order holds at 50 and 200 particles. The effective sample size before resampling does not depend on
+the scheme, since it is computed before the scheme acts.
+
+In FastSLAM 1.0 (\cref{tab:E01_resampling_scheme_slam}) the order of diversity is the same, from 86\% distinct particles
+for systematic to 61--62\% for multinomial resampling, and here it carries over to accuracy. With 10 particles
+systematic resampling gives a clearly lower trajectory error than multinomial resampling (ATE 0.23 against 0.32\,m) and
+a clearly better map (0.105 against 0.139\,m). With 50 particles stratified resampling gives the best map, clearly
+better than multinomial (0.069 against 0.097\,m).
+
+The runtimes of the four schemes reflect the reused implementations rather than the schemes themselves. The
+multinomial resampler searches the cumulative weights linearly for every new particle, and the stratified resampler
+recomputes the sum of all weights for every particle, so both take $O(N^2)$ time; the residual resampler passes its
+remaining particles to the same multinomial search. The systematic resampler makes one pass over the weights, $O(N)$.
+All four schemes can be implemented in $O(N)$, so only the accuracy and diversity results compare the schemes; the
+runtime column compares these implementations.
+
+\experimenttable{E01_resampling_scheme_localization}{Resampling schemes in localization, resampling at every step.}
+\experimentfigure{E01_resampling_scheme_localization}{metrics}{Resampling schemes in localization: metrics against the number of particles.}
+\experimenttable{E01_resampling_scheme_slam}{Resampling schemes in FastSLAM 1.0, resampling at every step.}
+\experimentfigure{E01_resampling_scheme_slam}{metrics}{Resampling schemes in FastSLAM 1.0: metrics against the number of particles.}
+
+\subsection{When to resample}\label{sec:e02}
+
+\paragraph{Question and setup.} Should the filter resample at every step, never, or only when the weights have
+degenerated, and how much does the threshold matter? The localization filter uses 100 particles, the motion-model
+proposal and systematic resampling. The adaptive rules resample when $\mathrm{ESS} < \tau N$ with $\tau$ = 0.2, 0.5 or
+0.8, or when $1 / \max_i \w^{(i)} < \tau N$ with $\tau$ = 0.1, 0.2 or 0.5. The expectation was that never resampling
+loses track, resampling at every step wastes diversity, and an ESS threshold around 0.5 does best.
+
+\paragraph{Results.} Never resampling fails (\cref{tab:E02_when_to_resample}): the effective sample size falls to about
+1\% of the particles and the position error, 1.39\,m, is three times that of any rule that resamples. The median NEES
+of $1.6 \times 10^9$ shows that its estimate is confidently wrong. All seven rules that resample reach the same accuracy,
+0.45 to 0.49\,m, with differences far inside the seed-to-seed spread, and the same median NEES of 43 to 51. They
+differ in how often they resample: the thresholds of 0.2 resample at about a third of the steps (34\% for the ESS rule,
+35\% for the largest-weight rule), the middle thresholds at about half (54\% and 48\%), and the highest at 75--80\%.
+Resampling less often leaves fewer distinct particles after each resampling step, 25\% at the lowest thresholds against
+64\% when resampling at every step, because the weights are more degenerate when resampling happens. With this proposal
+and world, the threshold therefore changes the cost and the diversity per resampling step, but not the accuracy; the
+ESS rule and the largest-weight rule behave almost identically at comparable thresholds.
+
+\experimenttable{E02_when_to_resample}{Rules for when to resample, localization with 100 particles.}
+\experimentfigure{E02_when_to_resample}{metrics}{When to resample: metrics per rule.}
+\experimentfigure{E02_when_to_resample}{trace_ess}{When to resample: effective sample size over time.}
+
+\subsection{Proposal distribution}\label{sec:e03}
+
+\paragraph{Question and setup.} Do proposals that use the current measurement beat the motion model, and at which
+particle counts? In localization the motion model, the auxiliary particle filter and the extended Kalman particle filter
+run with 50, 100, 300 and 1000 particles, systematic resampling and an ESS threshold of 0.5. In SLAM, FastSLAM 1.0 and
+2.0 run with 5, 10, 25 and 100 particles, systematic resampling and the upstream rule, resampling when
+$\mathrm{ESS} < N / 1.5$. The expectation was that measurement-informed proposals reach a given error with fewer
+particles at a higher cost per particle.
+
+\paragraph{Localization.} The auxiliary particle filter keeps the largest effective sample size at every particle count,
+67--83\% against 44--55\% for the motion model (\cref{tab:E03_proposal_localization}), and from 100 particles on it is
+the most accurate: 0.26\,m against 0.46\,m for the motion model at 100 particles, and 0.12 against 0.13\,m at 1000.
+Its runtime per step is about twice that of the motion model with few particles and similar with 1000 particles. The
+extended Kalman particle filter keeps only about 20\% effective particles at every particle count. Its error falls with
+more particles, from 0.59\,m at 50 to 0.25\,m at 1000, and with 50 particles it is as accurate as the other two, but
+with 1000 particles it is clearly worse than both (0.25 against 0.12 and 0.13\,m) and six times slower. In this
+setting its linearized proposal does not make the weights more even, which is the point of a measurement-informed
+proposal (\cref{sec:discussion}).
+
+\paragraph{SLAM.} FastSLAM 2.0 keeps a clearly larger effective sample size than FastSLAM 1.0 at every particle count,
+79--81\% against 75--76\% (\cref{tab:E03_proposal_slam}). Its advantage in accuracy is largest with few particles. With
+5 particles it gives a clearly lower trajectory error (ATE 0.26 against 0.34\,m) and a clearly better map (0.10 against
+0.16\,m); with 10 particles the trajectory error is still clearly lower (0.22 against 0.26\,m). With 25 particles
+FastSLAM 1.0 has the clearly lower trajectory error (0.21 against 0.28\,m), and with 100 particles the two are within the
+spread. FastSLAM 2.0 costs 43--55\% more time per step. With 25 particles FastSLAM 1.0 builds a map as good as FastSLAM
+2.0 with 5 to 10 particles, at a similar runtime.
+
+\experimenttable{E03_proposal_localization}{Proposal distributions in localization.}
+\experimentfigure{E03_proposal_localization}{metrics}{Proposal distributions in localization: metrics against the number of particles.}
+\experimenttable{E03_proposal_slam}{FastSLAM 1.0 and 2.0.}
+\experimentfigure{E03_proposal_slam}{metrics}{FastSLAM 1.0 and 2.0: metrics against the number of particles.}
+
+\subsection{Number of particles}\label{sec:e04}
+
+\paragraph{Question and setup.} How do error, particle diversity and runtime change with the number of particles, and
+where do more particles stop helping? The localization filter uses the motion-model proposal, systematic resampling and
+an ESS threshold of 0.5, with 10 to 2500 particles.
+
+\paragraph{Results.} The error falls steeply up to a few hundred particles and then levels off
+(\cref{tab:E04_particle_count}): from 1.50\,m with 10 particles to 0.46\,m with 100, 0.21\,m with 250 and 0.16\,m with 500,
+and then only to 0.13\,m with 1000 and 0.12\,m with 2500. The spread over seeds shrinks in the same way, from 1.1\,m
+to 0.02\,m: with few particles some seeds do not find the true pose within the 30 steps after the uniform start, and
+with many particles all seeds do. The median NEES tells the same story. It is above $10^6$ with 10 and 25 particles, where the particle cloud
+has collapsed onto a wrong pose, and falls below 3 from 250 particles on. Values below 3 mean the particle spread is
+somewhat larger than the actual error, which fits the filter's assumed noise being larger than the true noise. The
+runtime per step grows from 0.18\,ms to 3.7\,ms. For this world, about 250 to 500 particles give most of the achievable
+accuracy at a small fraction of the cost of 2500.
+
+\experimenttable{E04_particle_count}{Number of particles, localization with the motion-model proposal.}
+\experimentfigure{E04_particle_count}{metrics}{Accuracy and runtime against the number of particles.}
+
+\subsection{Learning the noise parameters}\label{sec:e11}
+
+\paragraph{Question and setup.} The experiments above take the filter's noise settings as given. Can they be
+estimated from a recorded run instead? Each of the four components of $\theta$ is swept in turn while the other
+three are held at the values the world actually uses, and every value is scored by the log likelihood
+\eqref{eq:evidence} of the recorded measurements; the highest score gives the maximum-likelihood estimate. The
+filter uses the motion-model proposal, systematic resampling, an ESS threshold of 0.5 and 2000 particles, and
+starts around the true initial pose. The world is unchanged, so the answers are known: 0.2\,m and 0.05\,rad for the
+measurements, 0.005\,m and 0.002\,rad for the motion.
+
+\paragraph{The measurement parameters are recovered.} The sweeps of the assumed range and bearing noise have a
+clear maximum at the true value (\cref{tab:E11_learn_measurement_range,tab:E11_learn_measurement_bearing}). The
+best range noise is 0.19\,m against a true 0.2\,m, and the best bearing noise 0.047\,rad against a true
+0.05\,rad, both within one step of the sweep. The shape on either side is what \cref{sec:learning} predicts.
+Assuming too little noise makes the measurements that actually arrived look impossible and the log likelihood
+falls steeply, from 205 at 0.19\,m to $-252$ at 0.08\,m. Assuming too much noise makes every pose explain the
+measurements equally well and the score decays gently, to 98 at 0.8\,m. The penalty is strongly one-sided:
+halving the assumed range noise costs about 450 in log likelihood, while quadrupling it costs about 100, the
+asymmetry that \eqref{eq:gaussian-score} predicts. A filter whose noise is set by hand is therefore much safer
+overstating it than understating it, which is what the upstream settings do.
+
+On this world the most plausible setting is also close to the most accurate one. The position RMSE is lowest,
+0.063\,m, at 0.19 and 0.253\,m of assumed range noise, the same place as the likelihood maximum, so learning the
+model and tuning for accuracy do not conflict here.
+
+\paragraph{The sweep matches the closed form.} The measured curve can be checked against
+\eqref{eq:gaussian-score}, which gives the expected score of one residual, relative to its maximum, as
+$-\log(\sigma/\sigma^*) - (\sigma^{*2}/2\sigma^{2} - 1/2)$. The range sweep has four landmarks over 30 steps,
+so 120 such residuals, and nothing is fitted. Relative to the peak, the prediction at 0.142, 0.253, 0.45 and
+0.8\,m is $-18$, $-6$, $-49$ and $-110$, against measured $-20$, $-5$, $-47$ and $-108$. The one place it parts
+company is the far left: at 0.08\,m the prediction is $-205$ and the measurement $-457$, because there the
+weights degenerate and the downward bias of the estimator, which \eqref{eq:gaussian-score} does not describe,
+dominates. The agreement is evidence that the sweep measures what it is meant to, and the disagreement marks
+where the particle approximation stops being trustworthy.
+
+\paragraph{The motion parameters are not identifiable from 30 steps.} The same sweeps over the assumed forward
+and turn noise are flat (\cref{tab:E11_learn_motion_forward,tab:E11_learn_motion_turn}): the log likelihood stays
+at 205 to 206 while the assumed forward noise is varied by a factor of 30 and the assumed turn noise by a factor
+of 30. The true values, 0.005\,m and 0.002\,rad over 30 steps, are small next to the measurement noise that the
+filter corrects with at every step, so the recorded measurements barely depend on them. The parameters are in the
+model, and the data say almost nothing about them.
+
+This is a property of the data and not of the method. Repeating the turn sweep on a trajectory of 400 steps, with
+nothing else changed, turns the flat curve into one with a maximum at the true value
+(\cref{fig:E11_learn_motion_turn_long-metrics}): 0.0025\,rad against a true 0.002\,rad, and an assumed noise of
+0.0008\,rad now costs about 8000 in log likelihood. Because the parameters are tied across time slices, every
+extra step is evidence about the same number, and by \eqref{eq:fisher} the curvature of the likelihood grows with
+the number of steps, so enough steps resolve what 30 steps cannot.
+The one-sidedness is even stronger here: too small an assumed drift is rejected by thousands of nats, while ten
+times too much costs about 30.
+
+\paragraph{Independent recordings agree exactly when the parameter is identifiable.} Each seed is a separate
+recording of the robot, so the estimate can be formed from each seed on its own and the results compared. Where
+the sweep has a maximum the recordings agree: all 20 recordings pick 0.047\,rad for the bearing noise, and 17 of
+20 pick 0.19\,m for the range noise with the other three picking the next value up. Where the sweep is flat they
+do not: the 20 estimates of the turn noise from 30-step runs are spread over the whole sweep, from 0.0008 to
+0.025\,rad, with no value chosen by more than a few recordings. On 400 steps they concentrate again, 9 of 20 on
+0.0025\,rad and all within 0.0008 to 0.0045\,rad. Agreement between recordings is thus a usable test of whether a
+parameter is being estimated at all, and it also tests the assumption behind the tying: a noise level that changed
+between runs would show as a wide scatter even where the likelihood is sharply peaked.
+
+\paragraph{Learning needs the filter to track.} Repeating the range sweep from the uniform start used in
+\crefrange{sec:e01}{sec:e04} removes the maximum entirely (\cref{fig:E11_start_regime-metrics}). With the true, small
+noise the filter cannot find the robot within 30 steps from a uniform prior: the position RMSE is 2.3\,m against
+0.063\,m from a known start, and the log likelihood is $-1.3 \times 10^{4}$ against 205. The score then keeps
+improving as the assumed noise is widened, to $-5.2 \times 10^{3}$ at 0.8\,m, because a wider noise lets the
+particles spread enough to be useful, and the estimates from individual recordings scatter across the whole sweep,
+with only 2 of 20 agreeing. What the likelihood reports in this regime is which setting lets this filter work, not
+which setting generated the data.
+
+\paragraph{How much inference learning needs.} Repeating the range sweep with 25 to 2000 particles shows the
+transition (\cref{fig:E11_estimator_particles-best_per_seed}). At the true value the estimated log likelihood rises from
+$28 \pm 316$ with 25 particles to $184 \pm 65$ with 100, $203 \pm 16$ with 500 and $205 \pm 13$ with 2000: the
+downward bias and the spread of the estimator both shrink as the particle approximation improves, as
+\cref{sec:learning} anticipates. The estimate follows. With 25 particles no two recordings agree and the median
+estimate is 0.22\,m; with 100 particles 12 of 20 recordings pick 0.19\,m, with 500 particles 14 of 20 and with
+2000 particles 17 of 20. The resampling scheme, in contrast, makes almost no difference
+(\cref{tab:best-E11_estimator_resampler}): with 200 particles all four schemes put the maximum at 0.19\,m and 14 or 15
+of 20 recordings agree, matching \cref{sec:e01}, where the schemes differed in particle diversity rather than in
+accuracy.
+
+\experimentfigure{E11_learn_measurement_range}{metrics}{Sweeping the assumed range noise: the log likelihood peaks at the value the world uses, 0.2\,m, and the position error is lowest at the same place.}
+\experimenttable{E11_learn_measurement_range}{Sweeping the assumed range noise; the world uses 0.2\,m.}
+\experimenttable{E11_learn_measurement_bearing}{Sweeping the assumed bearing noise; the world uses 0.05\,rad.}
+\experimenttable{E11_learn_motion_forward}{Sweeping the assumed forward motion noise; the world uses 0.005\,m.}
+\experimenttable{E11_learn_motion_turn}{Sweeping the assumed turn noise over 30 steps; the world uses 0.002\,rad.}
+\experimentfigure{E11_learn_motion_turn_long}{metrics}{The same turn sweep over 400 steps: enough steps identify a value that 30 steps cannot.}
+\experimentfigure{E11_start_regime}{metrics}{The range sweep from a known start and from the uniform start of \crefrange{sec:e01}{sec:e04}. Note the scale: from the uniform start the estimate is four orders of magnitude lower and has no maximum.}
+\experimentfigure{E11_estimator_particles}{best_per_seed}{The range noise that each recording picks out on its own, against the number of particles.}
+\experimentbest{E11_estimator_resampler}{The range noise picked out under each resampling scheme, with 200 particles.}

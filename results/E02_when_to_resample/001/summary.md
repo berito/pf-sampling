@@ -29,10 +29,11 @@ Mean ± standard deviation over seeds.
 
 ## Findings (computed automatically)
 
-- Position RMSE: lowest is Max weight (0.2) (0.452), vs Never (1.39), a 67% difference, clearly beyond the seed-to-seed spread (95% intervals).
-- Distinct after resampling / N: highest is Never (1), vs ESS threshold (0.2) (0.254), a 294% difference, clearly beyond the seed-to-seed spread (95% intervals).
-- Mean ESS / N: highest is Every step (0.591), vs Never (0.0106), a 5493% difference, clearly beyond the seed-to-seed spread (95% intervals).
-- Median NEES: closest to the ideal 3 is Max weight (0.2) (43.3), vs Never (1.6e+09), a 100% difference, clearly beyond the seed-to-seed spread (95% intervals).
+- clear differences in Position RMSE (Max weight (0.2) 0.452 vs Never 1.39, 67%), Distinct after resampling / N (Never 1 vs ESS threshold (0.2) 0.254, 294%), Mean ESS / N (Every step 0.591 vs Never 0.0106, 5493%) and Median NEES (Max weight (0.2) 43.3 vs Never 1.6e+09, 100%).
+
+## Notes
+
+- 160 of 160 runs were made with a different version of the code than the current one.
 
 ## Figures
 

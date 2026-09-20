@@ -255,5 +255,6 @@ def test_findings_compare_variants_only_at_the_same_value_of_the_other_setting(c
     summary = json.loads((R.experiment_dir(experiment.id) / "001" / "summary.json").read_text())
     assert summary["findings"]
     for sentence in summary["findings"]:
-        assert sentence.startswith(("At n particles = 20: ", "At n particles = 40: "))
+        # a statement that holds in both groups is merged into one, and still never mixes the two
+        assert sentence.startswith(("At n particles = 20: ", "At n particles = 40: ", "At every n particles: "))
         assert "n_particles" not in sentence.split(": ", 1)[1]

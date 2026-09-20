@@ -1,0 +1,46 @@
+\section{Discussion and conclusion}\label{sec:discussion}
+
+\paragraph{Which choices mattered.} The number of particles and the decision to resample at all decided most of
+the accuracy. The choices made inside resampling decided particle diversity instead, and the two are not the same
+thing: a difference in diversity reaches the estimate only when particles are scarce and each one carries a map.
+The proposal sits between them, mattering most where particles are few and losing its advantage as they are added.
+A measurement-informed proposal also costs more per particle, so the fair comparison is at equal runtime rather
+than at equal particle count, and there its advantage is much smaller. Adaptive resampling buys no accuracy in
+these worlds but saves resampling steps at no cost.
+
+\paragraph{What limits learning.} Two limits, of different kinds. The first is the inference: the objective is
+estimated by the same weights that do the filtering, so a filter that has not found the robot reports which
+setting lets it work rather than which setting generated the data, and a filter with too few particles reports
+noise. Inference quality is a precondition for learning, not merely something learning improves. The second is the
+data: the motion parameters are perfectly well defined and undetermined by 30 steps of this world, and become
+determined only when the trajectory is long enough for their effect to show against the measurement noise. No
+amount of computation removes that, and agreement between independent recordings separates the two cases cheaply. The one-sided shape of the likelihood also explains a common practice: since understating a noise level is
+penalized far more heavily than overstating it, values set by hand are rationally kept large, as the settings
+inherited from the upstream code are.
+
+\paragraph{On reusing implementations.} Reused code has to be checked function by function before it is
+compared: four errors in the upstream code would each have biased a comparison, one of them leaving resampled
+particles sharing their state, which would have masked exactly the diversity effect measured here.
+
+\paragraph{Limitations.} The worlds are small and simulated, with known correspondences; real sensors, unknown
+data association and larger maps would make degeneracy and proposal quality more important. Each experiment
+varies one choice while the others are fixed, so interactions are not measured. The rules for when to resample
+were compared only in localization, and the resampling schemes in SLAM only with FastSLAM 1.0. The proposal and
+the number of particles were held fixed rather than varied, so nothing here says how the two choices studied
+interact with them. The learning
+experiments estimate one parameter at a time from a known start, so they do not give the joint maximum over all
+four, and a sweep is a cruder optimizer than expectation maximization.
+
+\paragraph{Conclusion.} Localization and SLAM, written as a dynamic Bayesian network, make the same three demands
+as any graphical model: a structure that justifies a factorization, an inference procedure for what the structure
+leaves open, and parameters that have to come from somewhere. This project took the structure as given and worked
+on the other two. On the inference side it measured which sampling choices change the answer, and found that most
+of the accuracy is decided before the resampling scheme is chosen. On the learning side it estimated the model's
+own noise parameters from recorded runs, recovered the measurement noise to within one step of the sweep, and
+showed that the motion noise is identifiable only with a longer trajectory. The two sides meet in one result: the
+quality of the approximate inference sets the ceiling on what can be learned.
+
+With more time the obvious next steps would be MCMC moves after resampling \cite{gilks2001following}, which
+attack particle impoverishment directly; the rules for when to resample in SLAM; estimating the four parameters
+together by expectation maximization instead of one sweep at a time; and running the whole thing on real data,
+where the correspondences are not given.

@@ -18,14 +18,16 @@ Rules:
 
 Each phase has a fixed scope and ends with a complete result: its experiments run and reviewed, and a report that
 could be handed in as it is. Finish the current phase before starting the next. Ideas and gaps found along the way go
-to **Later**, never into the current phase. Phase 1 is the course requirement; the others only if time allows.
+to **Later**, never into the current phase. Phases 1 and 2 are the course requirement: between them they cover representation, inference and learning.
+Phases 3-5 only if time allows.
 
 | Phase | Scope | Ends with | Status |
 |---|---|---|---|
 | **1 Core study** | setup, pipeline, E01-E04 (resampling scheme, when to resample, proposal, particle count), full report text | **Report v1**, ready to hand in | [x] |
-| **2 Resample-move** *(if time)* | MCMC move plug-in, E05 compared with E01 | Report v2 (adds a section) | [ ] |
-| **3 Wider coverage** *(if time)* | E07 when to resample in FastSLAM, E08 resamplers with FastSLAM 2.0, decisions on SLAM proposals and crossed combinations | Report v3 | [ ] |
-| **4 Real data** *(if time)* | gmapping on the Intel log (E06) | Report v4 | [ ] |
+| **2 Parameter learning** | marginal likelihood from the particle weights, E11 (learning the filter's noise parameters) | **Report v2**, covering learning as well | [ ] |
+| **3 Resample-move** *(if time)* | MCMC move plug-in, E05 compared with E01 | Report v3 (adds a section) | [ ] |
+| **4 Wider coverage** *(if time)* | E07 when to resample in FastSLAM, E08 resamplers with FastSLAM 2.0, decisions on SLAM proposals and crossed combinations | Report v4 | [ ] |
+| **5 Real data** *(if time)* | gmapping on the Intel log (E06) | Report v5 | [ ] |
 | **Later** | not scheduled; picked only when a phase is closed | | |
 
 Progress check: `python .claude/tools/check_milestones.py` (the current phase) or `... all`.
@@ -169,13 +171,68 @@ Configs are ready; run them with `make run E=E01` … `E=E04` (guide: experiment
 - [x] R7 Final check: `make -C report` builds from a clean copy; no TODO left
 - [x] R8 ⏸ CHECKPOINT — review with user
 
-# Phase 2 — Resample-move *(if time; ends with report v2)*
+# Phase 2 — Parameter learning (ends with report v2)
+E01-E04 ask how well the filter infers the pose when the model is given. This phase asks where the model itself
+comes from: the motion and measurement noise the filter assumes are currently fixed by hand, and the same particle
+weights that drive the filter also estimate the marginal likelihood p(z_1:T | theta), which is what a maximum-
+likelihood estimate of theta maximizes. The world's true noise (`true_motion_std`, `true_measurement_std`) and the
+filter's assumed noise (`process_std`, `measurement_std`) are already separate settings, so the world stays fixed
+while the assumed value is swept.
+
+In the course's terms, this is **maximum-likelihood parameter learning in a dynamic Bayesian network with latent
+state**: the structure is given and only the parameters of two CPDs are estimated (parameter learning, not structure
+learning), and the trajectory is never observed (incomplete data, Koller ch. 19, on the template models of ch. 6).
+Parameter tying in the template is what makes one noise value cover every time slice, and what makes each step,
+not each run, evidence about the parameters. The report keeps these three apart: model parameters (learned: the
+noise levels), latent variables (inferred per run: poses and landmarks), and algorithm settings (chosen, not
+learned: particle count, resampler, when to resample). Use this vocabulary in the write-up.
+
+The filter's defaults are far from the world's truth: motion (0.1, 0.2) against (0.005, 0.002) and measurement
+(0.4, 0.3) against (0.2, 0.05). Overstating noise is a known way to keep a filter robust, so the question is not
+only whether the maximum-likelihood values recover the truth but what the inflated defaults cost or buy.
+
+- [x] L1 Marginal likelihood in the run log: per step, the log of the sum of the unnormalized weights
+      (`logsumexp` of the log weights before they are normalized); a `log_likelihood` metric sums them over the run.
+      With the bootstrap proposal the unnormalized weight is already the previous weight times p(z_t | x_t), so the
+      per-step sum is p(z_t | z_1:t-1) and the estimator telescopes correctly whether or not the step resampled.
+      The auxiliary and extended Kalman proposals weight in two stages and need a different estimator, so the metric
+      is reported for `motion_model` only and refuses the others rather than returning a wrong number.
+- [x] L2 Test L1 against an exact answer: a small linear-Gaussian model in the test, where a Kalman filter gives the
+      log-likelihood in closed form; the particle estimate must approach it as N grows, and its spread over seeds
+      must shrink.
+- [x] L3 `E11_noise_parameter_learning`: the world keeps its true noise, the filter's assumed `measurement_std` and
+      `process_std` are swept; report log-likelihood, position RMSE, mean ESS/N and median NEES per value. The
+      maximum-likelihood estimate is the argmax of the mean log-likelihood; compare it with the true noise and with
+      the hand-set default, and compare the value that maximizes the likelihood with the value that minimizes RMSE.
+      One parameter is swept at a time with the others at their true values (a profile likelihood), over log-spaced
+      values wide enough to cover both the truth and the current defaults. A single scale factor cannot serve,
+      because the components sit at different multiples of the truth.
+      Two regimes, since they give opposite answers and the contrast is the result:
+        - tracking start (particles begin near the true first pose): the profile peaks at the true value.
+        - uniform start (the global localization of E01-E04): with the true noise the filter never finds the robot,
+          the likelihood estimate collapses, and the profile has no peak within any sensible range.
+      The uniform start needs no new experiment, but the tracking start needs a way to start the particles near a
+      known pose, which `run_mcl` does not have yet.
+- [x] L4 Check the assumption the template makes: estimate the parameters from each seed's recording separately and
+      report how the estimates scatter. Tying one CPD across all time slices asserts the noise is constant; tight
+      agreement between independent recordings supports it, wide scatter would say the model needs noise that varies
+      with conditions. The scatter should also narrow as the number of steps grows.
+- [x] L5 Tie the learning back to the inference results: the same sweep run with different particle counts and with
+      the four resampling schemes, reporting how far the estimate scatters between recordings. A degenerate particle
+      set gives a poor likelihood estimate, so the sampling choices decide how well theta can be learned at all.
+- [x] L6 Report v2: a background subsection placing the phase in the course's taxonomy (parameter learning with
+      incomplete data, parameter tying, and where EM would come in), the E11 subsection, and a discussion paragraph
+      on inference quality as the limit on learning; `make report` builds, no TODO. Appendix A gains the missing
+      normalizing constant in the localization likelihood, with why it does not change E01-E04.
+- [ ] L7 ⏸ CHECKPOINT — review with user; phase closed
+
+# Phase 3 — Resample-move *(if time; ends with report v3)*
 - [ ] D1 `techniques/moves/resample_move_mh.py` — Metropolis-Hastings moves after resampling
 - [ ] D2 Run `E05_resample_move` (config ready, skipped until D1 exists); compare against E01 with `make compare`
-- [ ] D3 Report v2: add the E05 subsection (question, setup, table, figure, findings); `make report` builds, no TODO
+- [ ] D3 Report v3: add the E05 subsection (question, setup, table, figure, findings); `make report` builds, no TODO
 - [ ] D4 ⏸ CHECKPOINT — review with user; phase closed
 
-# Phase 3 — Wider coverage *(if time; ends with report v3)*
+# Phase 4 — Wider coverage *(if time; ends with report v4)*
 E01–E04 vary one sampling choice at a time and leave some filter/technique pairs out. Each gap is either run as its
 own experiment (one YAML, numbered result set) or recorded as a limitation in the report.
 - [ ] W1 `E07_when_to_resample_slam`: every step, never, ESS threshold (0.2/0.5/0.8), max weight (0.1/0.2/0.5) in
@@ -186,16 +243,19 @@ own experiment (one YAML, numbered result set) or recorded as a limitation in th
       `E09_proposal_slam_extended`; if no, state it as a limitation in the report
 - [ ] W4 Crossed combinations: decide which pairs are worth crossing (e.g. resampler × when-to-resample, proposal ×
       resampler) and keep the run count manageable; run as `E10_...` or state it as a limitation
-- [ ] W5 Report v3: a subsection per new experiment, and the limitations for what was decided against
+- [ ] W5 Report v4: a subsection per new experiment, and the limitations for what was decided against
 - [ ] W6 ⏸ CHECKPOINT — review with user; phase closed
 
-# Phase 4 — Real data *(if time; ends with report v4)*
+# Phase 5 — Real data *(if time; ends with report v5)*
 - [ ] E1 `E06_gmapping_resampling` — resampling threshold × N on the Intel log; ESS only (no ground truth). Config ready: `make run E=E06`
-- [ ] E2 Report v4: add the E06 subsection
+- [ ] E2 Report v5: add the E06 subsection
 - [ ] E3 ⏸ CHECKPOINT — review with user; phase closed
 
 # Later (not scheduled)
 Picked only when a phase is closed. New ideas are added here, not to the phase in progress.
+- SMC-EM: a particle smoother as the E step and a closed-form update of the noise covariances as the M step,
+  iterated until theta converges (a full learning algorithm rather than a sweep)
+- Learned and differentiable proposals
 - HMC move · unscented proposal
 - Extended Kalman proposal that resets each particle's covariance every step (linearised optimal proposal): 0.12 m
   and ESS/N 0.58 at N=1000 in a side test, against 0.25 m and 0.22 for the current version

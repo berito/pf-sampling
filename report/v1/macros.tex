@@ -1,0 +1,71 @@
+% Shared commands for the report.
+
+% Placeholder text, shown in red so nothing unfinished slips through.
+\newcommand{\todo}[1]{\textcolor{red}{[TODO: #1]}}
+
+% Notation
+\newcommand{\x}{\bm{x}}
+\newcommand{\z}{\bm{z}}
+\newcommand{\uu}{\bm{u}}
+\newcommand{\m}{\bm{m}}
+\newcommand{\w}{w}
+
+% Experiment results are read straight from results/, never copied, so rerunning an experiment updates the
+% report. Until an experiment has run, a red placeholder is shown instead.
+\providecommand{\resultsdir}{../../results}  % a build can point elsewhere first, e.g. at ../results/quick
+
+% Each experiment keeps numbered result sets (results/<experiment>/001/, 002/, ...). The report shows the one named in
+% results/<experiment>/current.txt, unless a number is given: \experimenttable[002]{...}{...}.
+% \setdir is set to the result set's folder.
+\newcommand{\resultset}[2]{% #1 number (may be empty), #2 experiment
+  \def\setnumber{#1}%
+  \ifx\setnumber\empty
+    \IfFileExists{\resultsdir/#2/current.txt}%
+      {\CatchFileEdef{\setnumber}{\resultsdir/#2/current.txt}{\endlinechar=-1 }}{\def\setnumber{none}}%
+  \fi
+  \edef\setdir{\resultsdir/#2/\setnumber}%
+}
+
+% \experimenttable{E01_resampling_scheme_localization}{Caption}   or   \experimenttable[002]{...}{Caption}
+% A table wider than the text is scaled down to fit; a narrower one keeps its size.
+\newsavebox{\resulttable}
+\newcommand{\experimenttable}[3][]{%
+  \resultset{#1}{#2}%
+  \IfFileExists{\setdir/tables/summary.tex}{%
+    \begin{table}[htbp]
+      \centering\small
+      \caption{#3 Mean $\pm$ standard deviation over seeds.}\label{tab:#2#1}
+      \sbox{\resulttable}{\input{\setdir/tables/summary.tex}}%
+      \ifdim\wd\resulttable>\linewidth\resizebox{\linewidth}{!}{\usebox{\resulttable}}\else\usebox{\resulttable}\fi
+    \end{table}%
+  }{\par\todo{Table for \detokenize{#2}: run the experiment first.}\par
+    \typeout{MISSING RESULTS: \detokenize{#2} table}}%
+}
+
+% \experimentbest{E11_learn_measurement_range}{Caption}
+% The value of the swept setting that each seed's own runs pick out, so independent recordings can be compared.
+\newcommand{\experimentbest}[3][]{%
+  \resultset{#1}{#2}%
+  \IfFileExists{\setdir/tables/best.tex}{%
+    \begin{table}[htbp]
+      \centering\small
+      \caption{#3}\label{tab:best-#2#1}
+      \input{\setdir/tables/best.tex}
+    \end{table}%
+  }{\par\todo{Per-recording table for \detokenize{#2}: run the experiment first.}\par
+    \typeout{MISSING RESULTS: \detokenize{#2} best table}}%
+}
+
+% \experimentfigure{E01_resampling_scheme_localization}{metrics}{Caption}   (figure name without extension)
+% or \experimentfigure[002]{...}{metrics}{Caption}
+\newcommand{\experimentfigure}[4][]{%
+  \resultset{#1}{#2}%
+  \IfFileExists{\setdir/figures/#3.pdf}{%
+    \begin{figure}[htbp]
+      \centering
+      \includegraphics[width=\linewidth]{\setdir/figures/#3.pdf}
+      \caption{#4}\label{fig:#2-#3#1}
+    \end{figure}%
+  }{\par\todo{Figure \detokenize{#3} for \detokenize{#2}: run the experiment first.}\par
+    \typeout{MISSING RESULTS: \detokenize{#2} figure #3}}%
+}

@@ -1,0 +1,54 @@
+{
+ "run_id": "2f8d0184632f",
+ "experiment": "E11_estimator_resampler",
+ "filter": "mcl",
+ "seed": 17,
+ "world": {},
+ "settings": {
+  "proposal": "motion_model",
+  "trigger": {
+   "name": "ess_threshold",
+   "threshold": 0.5
+  },
+  "n_particles": 200,
+  "start": "known",
+  "bearing_std": 0.05,
+  "forward_std": 0.005,
+  "turn_std": 0.002,
+  "resampler": "residual",
+  "range_std": 0.6
+ },
+ "variant": {
+  "resampler": "residual",
+  "range_std": 0.6
+ },
+ "metrics": {
+  "ate": 0.08460700654725814,
+  "resample_rate": 0.3333333333333333,
+  "collapses": 0,
+  "unique_after_resampling": 0.45600000000000007,
+  "max_weight_mean": 0.0083090610289061,
+  "ess_mean": 0.6713488694715839,
+  "ess_min": 0.24832343047428737,
+  "log_likelihood": 120.2805443666403,
+  "log_likelihood_per_step": 4.00935147888801,
+  "nees_mean": 5.264948422075166,
+  "nees_median": 4.3950485109722734,
+  "position_rmse": 0.10503616391598973,
+  "heading_rmse": 0.06145154157718778,
+  "final_position_error": 0.1250620958068846,
+  "runtime_total_s": 0.013583760000074108,
+  "runtime_per_step_ms": 0.4527920000024703
+ },
+ "duration_s": 0.016,
+ "host": "labdesktop",
+ "date": "2026-09-20T10:04:33+00:00",
+ "python": "3.11.16",
+ "numpy": "2.2.6",
+ "code": "1073b69d29e5",
+ "vendor_commits": {
+  "particle_filter_tutorial": "e6014b7",
+  "pythonrobotics": "1fe4fb9",
+  "openslam_gmapping": "79ef0b0"
+ }
+}

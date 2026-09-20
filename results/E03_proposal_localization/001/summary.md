@@ -33,26 +33,18 @@ Mean ± standard deviation over seeds.
 
 ## Findings (computed automatically)
 
-- At n particles = 50: Position RMSE: lowest is Extended Kalman PF (0.592), vs Motion model (0.682), a 13% difference, within the seed-to-seed spread (95% intervals).
-- At n particles = 50: ATE (aligned): lowest is Extended Kalman PF (0.322), vs Motion model (0.484), a 33% difference, within the seed-to-seed spread (95% intervals).
-- At n particles = 50: Mean ESS / N: highest is Auxiliary PF (0.673), vs Extended Kalman PF (0.182), a 270% difference, clearly beyond the seed-to-seed spread (95% intervals).
-- At n particles = 50: Median NEES: closest to the ideal 3 is Motion model (304), vs Extended Kalman PF (1.76e+04), a 98% difference, within the seed-to-seed spread (95% intervals).
-- At n particles = 50: Runtime per step: lowest is Motion model (0.256), vs Extended Kalman PF (1.83), a 86% difference, clearly beyond the seed-to-seed spread (95% intervals).
-- At n particles = 100: Position RMSE: lowest is Auxiliary PF (0.264), vs Extended Kalman PF (0.47), a 44% difference, within the seed-to-seed spread (95% intervals).
-- At n particles = 100: ATE (aligned): lowest is Auxiliary PF (0.215), vs Motion model (0.332), a 35% difference, within the seed-to-seed spread (95% intervals).
-- At n particles = 100: Mean ESS / N: highest is Auxiliary PF (0.786), vs Extended Kalman PF (0.192), a 310% difference, clearly beyond the seed-to-seed spread (95% intervals).
-- At n particles = 100: Median NEES: closest to the ideal 3 is Auxiliary PF (0.919), vs Extended Kalman PF (522), a 100% difference, within the seed-to-seed spread (95% intervals).
-- At n particles = 100: Runtime per step: lowest is Motion model (0.318), vs Extended Kalman PF (2.63), a 88% difference, clearly beyond the seed-to-seed spread (95% intervals).
-- At n particles = 300: Position RMSE: lowest is Auxiliary PF (0.21), vs Extended Kalman PF (0.356), a 41% difference, within the seed-to-seed spread (95% intervals).
-- At n particles = 300: ATE (aligned): lowest is Auxiliary PF (0.17), vs Extended Kalman PF (0.236), a 28% difference, within the seed-to-seed spread (95% intervals).
-- At n particles = 300: Mean ESS / N: highest is Auxiliary PF (0.799), vs Extended Kalman PF (0.202), a 295% difference, clearly beyond the seed-to-seed spread (95% intervals).
-- At n particles = 300: Median NEES: closest to the ideal 3 is Auxiliary PF (2.78), vs Extended Kalman PF (42.3), a 93% difference, within the seed-to-seed spread (95% intervals).
-- At n particles = 300: Runtime per step: lowest is Motion model (0.588), vs Extended Kalman PF (5.79), a 90% difference, clearly beyond the seed-to-seed spread (95% intervals).
-- At n particles = 1000: Position RMSE: lowest is Auxiliary PF (0.119), vs Extended Kalman PF (0.253), a 53% difference, clearly beyond the seed-to-seed spread (95% intervals).
-- At n particles = 1000: ATE (aligned): lowest is Auxiliary PF (0.0991), vs Extended Kalman PF (0.181), a 45% difference, clearly beyond the seed-to-seed spread (95% intervals).
-- At n particles = 1000: Mean ESS / N: highest is Auxiliary PF (0.833), vs Extended Kalman PF (0.218), a 283% difference, clearly beyond the seed-to-seed spread (95% intervals).
-- At n particles = 1000: Median NEES: closest to the ideal 3 is Extended Kalman PF (0.667), vs Auxiliary PF (0.411), a 62% difference, within the seed-to-seed spread (95% intervals).
-- At n particles = 1000: Runtime per step: lowest is Auxiliary PF (2.48), vs Extended Kalman PF (15.2), a 84% difference, clearly beyond the seed-to-seed spread (95% intervals).
+- At n particles = 50: clear differences in Mean ESS / N (Auxiliary PF 0.673 vs Extended Kalman PF 0.182, 270%) and Runtime per step (Motion model 0.256 vs Extended Kalman PF 1.83, 86%).
+- At n particles = 50: no difference beyond the seed-to-seed spread in Position RMSE, ATE (aligned) and Median NEES.
+- At n particles = 100: clear differences in Mean ESS / N (Auxiliary PF 0.786 vs Extended Kalman PF 0.192, 310%) and Runtime per step (Motion model 0.318 vs Extended Kalman PF 2.63, 88%).
+- At n particles = 100: no difference beyond the seed-to-seed spread in Position RMSE, ATE (aligned) and Median NEES.
+- At n particles = 300: clear differences in Mean ESS / N (Auxiliary PF 0.799 vs Extended Kalman PF 0.202, 295%) and Runtime per step (Motion model 0.588 vs Extended Kalman PF 5.79, 90%).
+- At n particles = 300: no difference beyond the seed-to-seed spread in Position RMSE, ATE (aligned) and Median NEES.
+- At n particles = 1000: clear differences in Position RMSE (Auxiliary PF 0.119 vs Extended Kalman PF 0.253, 53%), ATE (aligned) (Auxiliary PF 0.0991 vs Extended Kalman PF 0.181, 45%), Mean ESS / N (Auxiliary PF 0.833 vs Extended Kalman PF 0.218, 283%) and Runtime per step (Auxiliary PF 2.48 vs Extended Kalman PF 15.2, 84%).
+- At n particles = 1000: no difference beyond the seed-to-seed spread in Median NEES.
+
+## Notes
+
+- 240 of 240 runs were made with a different version of the code than the current one.
 
 ## Figures
 

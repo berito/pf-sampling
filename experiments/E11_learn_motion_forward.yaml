@@ -1,0 +1,30 @@
+# E11 (forward motion noise). Run: python -m pfexp.run experiments/E11_learn_motion_forward.yaml
+title: Can the motion noise be learned from the data? (forward)
+question: >
+  Sweeping the forward slip the filter assumes, does the marginal likelihood pick out the value the
+  world actually used (0.005 m per step)?
+hypothesis: >
+  Over 30 steps the true slip is small next to the measurement noise, so the recorded measurements
+  hardly depend on it and the likelihood is flat: the parameter is in the model but the data says
+  little about it.
+filter: mcl
+world: {}
+fixed:
+  proposal: motion_model
+  resampler: systematic
+  trigger: {name: ess_threshold, threshold: 0.5}
+  n_particles: 2000
+  start: known
+  range_std: 0.2
+  bearing_std: 0.05
+  turn_std: 0.002
+vary:
+  forward_std: [0.002, 0.00356, 0.00632, 0.01125, 0.02, 0.0356, 0.0632]
+seeds: 20
+quick:
+  seeds: 3
+  vary: {forward_std: [0.002, 0.00632, 0.02]}
+report:
+  metrics: [log_likelihood, position_rmse]
+  traces: []
+  best: log_likelihood

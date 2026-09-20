@@ -111,6 +111,11 @@ class Experiment:
     def traces(self):
         return self.report.get("traces", DEFAULT_TRACES)
 
+    @property
+    def best(self):
+        """The metric whose largest value picks out the swept setting's estimate, if the config asks for one."""
+        return self.report.get("best")
+
 
 def _seed_list(value):
     return list(range(value)) if isinstance(value, int) else list(value)

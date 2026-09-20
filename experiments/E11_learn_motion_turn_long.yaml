@@ -1,0 +1,30 @@
+# E11 (turn noise, long run). Run: python -m pfexp.run experiments/E11_learn_motion_turn_long.yaml
+title: Does more data make the motion noise identifiable? (turn, 400 steps)
+question: >
+  The same sweep as the 30-step run, on a trajectory of 400 steps and with nothing else changed. Does
+  the flat likelihood become a peak at the true heading drift (0.002 rad per step)?
+hypothesis: >
+  Every step contributes evidence about the same parameter, so a longer trajectory sharpens the
+  likelihood; too small a drift becomes very unlikely first, since the particles then cannot follow
+  the robot at all.
+filter: mcl
+world: {n_steps: 400}
+fixed:
+  proposal: motion_model
+  resampler: systematic
+  trigger: {name: ess_threshold, threshold: 0.5}
+  n_particles: 1000        # the runs are 13 times longer than the 30-step ones
+  start: known
+  range_std: 0.2
+  bearing_std: 0.05
+  forward_std: 0.005
+vary:
+  turn_std: [0.0008, 0.00142, 0.00253, 0.0045, 0.008, 0.0142, 0.0253]
+seeds: 20
+quick:
+  seeds: 2
+  vary: {turn_std: [0.0008, 0.00253, 0.008]}
+report:
+  metrics: [log_likelihood, position_rmse]
+  traces: []
+  best: log_likelihood
